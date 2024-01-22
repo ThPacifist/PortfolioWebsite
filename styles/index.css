@@ -1,0 +1,117 @@
+main div {
+    margin: auto;
+}
+
+
+/* ---ID's--- */
+/* Greeting */
+#greeting {
+    clear: both;
+}
+
+#greeting section {
+    margin: 25vh 2vw;
+}
+#greeting h1, h2, h3, p, a{
+    margin: 0;
+    font-weight: normal;
+    text-align: center;
+}
+#greeting h1 {
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    font-weight: bold;
+    font-size: 4.5em;
+}
+#greeting h2 {
+    font-size: 2.5em;
+}
+#greeting p {
+    font-size: 1.75em;
+}
+
+#greeting a {
+    color: black;
+    width: 12vw;
+    padding: 2vh 0vw;
+    border-radius: 35px;
+    font-size: 200%;
+    margin: 5vh auto auto auto;
+    background-color: var(--tertiary);
+    text-decoration: none;
+    display: block;
+}
+
+/*#greeting img {
+    height: 100%;
+    height: 80vh;
+    margin-left: 30%;
+}*/
+
+/* ---Classes--- */
+.nPage {
+    float: right;
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+.nPage a {
+    float: right;
+    margin-right: 30px;
+}
+
+.nPage a:hover {
+    color: rgb(15, 221, 15);
+}
+
+.games {
+    clear: both;
+    margin-top: 25px;
+    margin-bottom: 25px;
+    border-radius: 25px;
+    box-shadow: 5px 5px 10px black;
+    columns: 2;
+    column-width: 100px;
+}
+
+.games hr {
+    clear: both;
+}
+
+.games section {
+    width: 90%;
+    float: left;
+    margin: auto;
+    border-radius: 25px;
+    border: 5px solid black;
+}
+
+.games h1, .games h3, .games p {
+    text-align: left;
+}
+
+.games h1 {
+    font-size: 310%;
+    padding: 10px 5px;
+    margin: 0px;
+    background-color: black;
+    border-radius: 10px 10px 0px 0px;
+}
+
+.games h3 {
+    padding: 0px 0px 5px 10px;
+    background-color: rgb(36, 36, 36);
+    font-size: 150%;
+}
+
+.games p {
+    margin-top: 10px;
+    margin-left: 15px;
+    font-size: 110%;
+}
+
+.games img {
+    width: 90%;
+    border: 2px solid black;
+    border-radius: 15px;
+    margin: 10px 5px;
+}

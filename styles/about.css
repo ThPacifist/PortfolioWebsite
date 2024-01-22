@@ -1,0 +1,51 @@
+h2{
+    font-size: 320%;
+    background-color: var(--tertiary);
+    margin: 2vh 0 1vh 0;
+    text-align: center;
+    color: var(--baseColor);
+    padding: 15px;
+}
+p {
+    font-size: 160%;
+}
+
+main ul {
+    font-size: 210%
+}
+
+button {
+    font-size: 220%;
+    margin-left: 3vmax;
+    margin-bottom: 1vmax;
+    padding: 1.5vmax;
+    background-color: rgb(17, 58, 9);
+    color: var(--tertiary);
+    border-radius: 50px;
+}
+button:hover {
+    background-color:  rgb(67, 224, 35);
+    color: black;
+}
+
+#portrait {
+    width: 30%;
+    margin-left: 0px;
+    margin-right: 0px;
+    float: left;
+}
+#portrait img {
+    width: 90%;
+    float: left;
+}
+#portrait figcaption {
+    text-align: left;
+}
+
+#text {
+    margin-left: 22vw;
+    margin-bottom: 3vh;
+    padding-right: 1vw;
+    border: 5px solid black;
+    border-radius: 25px;
+}

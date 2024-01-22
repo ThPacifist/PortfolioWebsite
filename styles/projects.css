@@ -1,0 +1,61 @@
+div {
+    margin: auto;
+}
+
+/* -IDs- */
+#title {
+    margin: auto;
+    border-bottom: 7px dotted var(--secondary);
+    padding-bottom: 2vh;
+    columns: 2;
+}
+#title img {
+    display: block;
+    width: 750px;
+    border: 5px solid black;
+    border-radius: 10px;
+}
+#title ul {
+    display: block;
+    width: 60%;
+    font-size: 190%;
+    margin: auto;
+}
+#title li {
+    margin: 1vh 0;
+}
+
+h1 {
+    width: 100%;
+    margin: 4vh auto;
+    margin-top: 0;
+    padding: 2.5vh 0;
+    background-color: rgb(16, 82, 54);
+    font-size: 400%;
+    text-align: center;
+}
+h2 {
+    width: 100%;
+    margin: 4vh auto;
+    margin-top: 0;
+    padding: 1.75vh 0;
+    background-color: rgb(16, 82, 54);
+    font-size: 280%;
+    text-align: center;
+}
+h3 {
+    width: 100%;
+    font-size: 230%;
+    color: darkgreen;
+    background-color: rgb(29, 151, 100);
+    padding: 1.25vh 0;
+    margin: 2vh auto;
+    text-align: center;
+}
+p {
+    font-size: 160%;
+}
+hr {
+    margin: 0;
+    border-top: 2px solid;
+}

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>About Me</title>
+    <meta charset="UTF-8">
+    <meta name="author" content="Benjamin Henschen">
+    <meta name="description" content="This is the portfolio website for Benjamin Henschen">
+    <link rel="stylesheet" href="styles/normalize.css">
+    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/slicknav.css">
+    <link rel="stylesheet" href="styles\about.css">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="scripts/jquery.slicknav.min.js"></script>
+    <script src="scripts/main.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('#nav_menu').slicknav({prependTo:"#mobilemenu"});
+        });
+    </script>
+</head>
+<body>
+    <my-header></my-header>
+
+    <main>
+        <h2>About Me</h2>
+
+        <figure id="portrait">
+            <img src="pictures/OptimusPrime.jpg"/>
+        </figure>
+        <div id="text">
+            <p>
+                Hello, My name is Benjamin and I am a programmer based in the United States. I love video games and I also love making them. I specifically love the programming
+                part of the video games. I consider myself a gameplay programmer, but I want to try all the different kinds of programming that go into a video game, such as 
+                engine, graphic, animation, and more. 
+
+                <br><br>
+
+                During my free-time, I like to work on personal projects that allow me to learn other techniques and hone my skills. Also, whenever I start new project I always have goal
+                in mind, where I try something new. Such as, dynamic animation, Artifical intelligence, random terrain generation and more. Currently I don't have much 
+                professional experience, but I try to make up for that with motivaiton and passion towards my projects.
+
+                <br><br>
+
+                If you would like to see some of my work, please follow these links:
+            </p>
+
+            <ul>
+                <li><a href="index.html">Completed Projects</a></li>
+                <li><a href="index.html">Minor Projects</a></li>
+            </ul>
+
+            <p>And if you would like to look at my resume, please click the button below:</p>
+
+            <a href="documents\Resume.pdf" target="blank" id="buttonlink">
+                <button>Resume</button>
+            </a>
+        </div>
+        
+        </main>
+    
+    <my-footer></my-footer>
+</body>
+</html>

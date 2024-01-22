@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Benjamin Henschen Portfolio</title>
+    <meta name="author" content="Benjamin Henschen">
+    <meta name="description" content="This is the portfolio website for Benjamin Henschen">
+    <link rel="stylesheet" href="styles/normalize.css">
+    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/slicknav.css">
+    <link rel="stylesheet" href="styles/index.css">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="scripts/jquery.slicknav.min.js"></script>
+    <script src="scripts/main.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('#nav_menu').slicknav({prependTo:"#mobilemenu"});
+        });
+    </script>
+</head>
+<body>
+    <my-header></my-header>
+    <main>
+        <div id="greeting">
+            <section>
+                <h2>Hello, my name is</h3>
+                <h1>Benjamin Henschen</h1>
+
+                <p>I am a Gameplay Programmer </p>
+
+                <a href="aboutme.html">About Me</a> 
+            </section>
+        </div>
+
+        <h1 class="divider">Projects</h1>
+        <div class="games">
+            <section>
+                <h1>Embodiment</h1>
+                
+                <h3>Gameplay and Lead Programmer</h3>
+
+                <p>
+                    This was my senior year project for college. I lead a team of 5 to create a 2D puzzle platformer. I programmed and developed our player's movement, as well as the small
+                    mechanics necessary for our puzzles. I also created the cutscenes that play during our game.
+                </p>
+
+                <div class="nPage">
+                    <a href="embodiment.html">Read On--></a>
+                </div>
+            </section>
+
+            <img src="pictures\Embodiment\Embodiment Banner.PNG" alt="">
+            
+        </div>
+
+        <div class="games">
+            <section>
+                <h1>3 O'Clock Horror</h1>
+
+                <h3>Gameplay Programmer</h3>
+                <p>
+                    This was my junior year project, I was not the team lead but I was a team player. I programmed one of two AI's seen during our game. I programmed our player's movement
+                    and our game.s lighting system. I programmed one of the many puzzles within.
+                </p>
+
+                <div class="nPage">
+                    <a href="3oclockhorror.html">Read On--></a>
+                </div>
+            </section>
+
+            <img src="pictures\3O'ClockHorror\LibraryLogo.jpg" alt="">
+
+        </div>
+    </main>
+    <my-footer></my-footer>
+</body>
+</html>

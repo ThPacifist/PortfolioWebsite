@@ -1,0 +1,246 @@
+/*
+Colors:
+#382933 Base Color
+#3b5249
+#519872 text
+#a4b494
+outline: 5px solid yellow;
+???????: top, right, bottom, left
+ */
+
+ :root {
+    --baseColor: #293834;
+    --primary: rgb(56, 95, 80);
+    --secondary: rgb(129, 175, 148);
+    --tertiary: rgb(13, 180, 111);
+ }
+ /*
+    var(--primary)
+    var(--secondary)
+    var(--tertiary)
+    var( --baseColor)
+ */
+
+* {
+    color: var(--tertiary)
+}
+
+html {
+    font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    background-color: white;
+}
+
+body {
+    background-color: var(--baseColor);
+    margin: 0px auto;
+}
+
+/* -header- */
+header {
+    background-color: var(--primary) ;
+    border-bottom: 5px solid black;
+}
+
+/* -Main- */
+main {
+    width: 80%;
+    margin: auto;
+}
+
+/* -footer- */
+my-footer {
+    height: 10%;
+    display: block;
+}
+footer {
+    background-color: var(--primary);
+    border-top: 10px solid black;
+    clear: both;
+    text-align: center;
+    color: var(--tertiary);
+}
+
+/* -links- */
+#links {
+    padding: 15px 0px;
+}
+#links img{
+    width: 50px;
+    padding-right: 10px;
+    padding-left: 10px;
+}
+
+
+/* -Headings- */
+h1 {
+    color: var(--secondary);
+    font-size: 250%;
+}
+h2 {
+    color: var(--tertiary);
+    font-size: 160%;
+}
+h3 {
+    color: var(--tertiary);
+    font-size: 110%;
+}
+p {
+    color: var(--tertiary);
+}
+
+/* ----IDs---- */
+/* -Nav- */
+#nav_menu {
+    margin-bottom: 0%;
+}
+/* The styles for the operation of the 2-tier navigation menu */
+#nav_menu ul {
+    list-style: none;
+    position: relative;    /* So the first submenu can be positioned within the main menu */
+}
+#nav_menu ul li {
+    float: left;
+}
+#nav_menu ul ul {
+    display: none;         /* Don't display submenu until hover of the li element */
+    position: absolute;
+    top: 100%;             /* Position the submenu at the bottom of the main menu */
+}
+#nav_menu ul ul li {
+    float: none;           /* Display the submenus vertically */
+}
+#nav_menu ul li:hover > ul {
+    display: block;        /* Display the submenu on hover of the li element */
+}
+#nav_menu > ul::after {
+    content: "";
+    display: block;
+    clear: both;
+}
+
+/* The styles for the formatting of the 2-tier navigation menu */
+#nav_menu ul {
+    margin: 0;
+    padding: 0;
+}
+#nav_menu ul li {
+    width: 10%;
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+}
+#nav_menu ul li a {
+    text-align: center;
+    display: block;
+    width: 100%;
+    padding: 10px 0px;
+    text-decoration: none;
+    color: var(--tertiary);
+    font-weight: bold;
+    font-size: 180%;
+}
+#nav_menu ul li ul {
+    width: 100%
+}
+#nav_menu ul li ul li {
+    border-bottom: 2px solid black;
+    background-color: rgb(5, 80, 5);
+}
+#nav_menu ul li ul li a {
+    color: var(--tertiary);
+}
+#nav_menu ul li.lastitem a {
+    width: 175px;               /* So the menu fills the 706px width of the page */
+}
+#nav_menu ul li a.current {
+    color: rgb(0, 65, 101);
+}
+#nav_menu ul li a:hover, #nav_menu ul li a:focus {
+    background-color: gray;
+}
+
+/* -MobileMenu- */
+/* Hides the mobile menu */
+#mobile_menu {
+    display: none;
+}
+
+/* -Credits- */
+#credits h2{
+    margin-bottom: 10px;
+    padding-top: 10px;
+}
+
+/* -FAQsID- */
+#faqs {
+    margin: 0px 15% 3%;
+}
+
+/* -Figure- */
+#figRight {
+    width: 25%;
+    margin-left: 0px;
+    float: right;
+}
+#figRight img {
+    width: 90%;
+    float: right;
+}
+#figRight figcaption {
+    text-align: right;
+}
+
+#figLeft {
+    width: 25%;
+    margin-left: 0px;
+    float: left;
+}
+#figLeft img {
+    width: 90%;
+    float: left;
+}
+#figLeft figcaption {
+    text-align: left;
+}
+
+/* -Classes- */
+.right {
+    float: right;
+    clear: right;
+}
+.left {
+    float: left;
+    clear: left;
+}
+.stopFloat {
+    clear: both;
+}
+.dummyText {
+    margin: 0;
+    clear: both;
+    color: var(--baseColor);
+}
+.divider {
+    font-size: 300%;
+    background-color: var(--tertiary);
+    margin: auto;
+    text-align: center;
+    color:var(--baseColor);
+    padding: 10px;
+}
+
+/* -Media Queries- */
+/*When the width is between 960px and 768px*/
+@media only screen and (max-width: 960px)
+{
+
+}
+/*When the width is between 767px and 480px*/
+@media only screen and (max-width: 767px)
+{
+
+}
+/*When the width is less than 480px*/
+@media only screen and (max-width: 479px)
+{
+
+}
