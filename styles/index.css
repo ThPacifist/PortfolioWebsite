@@ -7,10 +7,11 @@ main div {
 /* Greeting */
 #greeting {
     clear: both;
+    background-color: black;
 }
 
 #greeting section {
-    margin: 25vh 2vw;
+    padding: 20vh 2vw;
 }
 #greeting h1, h2, h3, p, a{
     margin: 0;
