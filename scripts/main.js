@@ -12,8 +12,8 @@ class MyHeader extends HTMLElement
                             <ul>
                                 <li><a href="3oclockhorror.html">3 O'Clock Horror</a></li>
                                 <li><a href="embodiment.html">Embodiment</a></li>
-                                <li><a href="">Unnamed Samurai Game</a></li>
-                                <li><a href="">Stalker and Brute</a></li>
+                                <!-- <li><a href="">Unnamed Samurai Game</a></li>
+                                <li><a href="">Stalker and Brute</a></li> -->
                             </ul>
                         </li>
                         <li><a href="documents/Resume.pdf" target="_blank">Resume</a></li>

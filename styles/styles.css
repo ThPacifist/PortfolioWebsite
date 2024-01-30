@@ -175,34 +175,34 @@ p {
     margin: 0px 15% 3%;
 }
 
+/* -Classes- */
 /* -Figure- */
-#figRight {
+.figRight {
     width: 25%;
     margin-left: 0px;
     float: right;
 }
-#figRight img {
+.figRight img {
     width: 90%;
     float: right;
 }
-#figRight figcaption {
+.figRight figcaption {
     text-align: right;
 }
 
-#figLeft {
+.figLeft {
     width: 25%;
     margin-left: 0px;
     float: left;
 }
-#figLeft img {
+.figLeft img {
     width: 90%;
     float: left;
 }
-#figLeft figcaption {
+.figLeft figcaption {
     text-align: left;
 }
 
-/* -Classes- */
 .right {
     float: right;
     clear: right;
