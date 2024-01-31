@@ -3,6 +3,24 @@ div {
 }
 
 /* -IDs- */
+#blobForms li {
+    margin-bottom: 1vh;
+    padding-top: 1vh;
+    padding-bottom: 1vh;
+    list-style-type: none;
+    font-size: 160%;
+    text-align: center;
+    box-shadow: 5px 5px 10px black;
+    border-radius: 10px;
+}
+#blobForms figure {
+    display: flex;
+    justify-content: space-evenly;
+}
+#blobForms figure img {
+    height: 300px;
+}
+
 #title {
     margin: auto;
     border-bottom: 7px dotted var(--secondary);
