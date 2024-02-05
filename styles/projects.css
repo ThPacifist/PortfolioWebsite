@@ -3,22 +3,34 @@ div {
 }
 
 /* -IDs- */
+
 #blobForms li {
-    margin-bottom: 1vh;
+    margin-bottom: 2vh;
     padding-top: 1vh;
     padding-bottom: 1vh;
     list-style-type: none;
-    font-size: 160%;
+    font-size: 200%;
     text-align: center;
     box-shadow: 5px 5px 10px black;
     border-radius: 10px;
 }
 #blobForms figure {
-    display: flex;
-    justify-content: space-evenly;
+    display: none;
 }
 #blobForms figure img {
     height: 300px;
+    margin: auto;
+}
+#blobForms figcaption {
+    margin: auto;
+    font-size: 80%;
+}
+#blobForms li:hover {
+    color: greenyellow;
+}
+#blobForms li:hover > figure {
+    display: flex;
+    justify-content: space-evenly;
 }
 
 #title {
