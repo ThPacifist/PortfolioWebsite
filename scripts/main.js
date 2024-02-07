@@ -16,7 +16,7 @@ class MyHeader extends HTMLElement
                                 <li><a href="">Stalker and Brute</a></li> -->
                             </ul>
                         </li>
-                        <li><a href="documents/Resume.pdf" target="_blank">Resume</a></li>
+                        <li><a href="documents\Game Developer Resume.pdf" target="_blank">Resume</a></li>
                         <li><a href="aboutme.html">About Me</a></li>
                     </ul>
                 </nav>
