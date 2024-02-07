@@ -69,6 +69,9 @@ div {
     width: 75px;
     border: none;
 }
+#sourcelinks img:hover {
+    outline: 3px rgb(70, 176, 211) solid;
+}
 
 h1 {
     width: 100%;
