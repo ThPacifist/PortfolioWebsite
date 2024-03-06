@@ -2,13 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Benjamin Henschen Portfolio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Benjamin Henschen">
     <meta name="description" content="This is the portfolio website for Benjamin Henschen">
     <link rel="stylesheet" href="styles/normalize.css">
-    <link rel="stylesheet" href="styles/styles.css">
     <link rel="stylesheet" href="styles/slicknav.css">
     <link rel="stylesheet" href="styles/index.css">
+    <link rel="stylesheet" href="styles/styles.css">
+    <link href="css/main.min.css" rel="stylesheet">
+    <title>Benjamin Henschen Portfolio</title>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script src="scripts/jquery.slicknav.min.js"></script>
     <script src="scripts/main.js"></script>
@@ -18,60 +20,68 @@
         });
     </script>
 </head>
-<body>
+<body class="bg-dark">
     <my-header></my-header>
-    <div id="greeting">
-        <section>
-            <h2>Hello, my name is</h3>
-            <h1>Benjamin Henschen</h1>
-
-            <p>I am a Gameplay Programmer </p>
-
-            <a href="aboutme.html">About Me</a> 
-        </section>
+    <div class="container-fluid p-4 bg-dark">
+        <div class="row">
+            <h2 class="display-2">Hello, my name is</h3>
+        </div>
+        <div class="row">
+            <h1 class="display-1 text-center">Benjamin Henschen</h1>
+        </div>
+        <div class="row">
+            <h3 class="display-4">I am a Gameplay Programmer </h3>
+        </div>
+        <div class="row justify-content-center m-4">
+            <div class="col-2 bg-success rounded-pill text-center p-3">
+                <a href="aboutme.html" class="h2 text-dark text-decoration-none">About Me</a> 
+            </div>
+        </div> 
     </div>
 
-    <main>
-        <h1 class="divider">Projects</h1>
-        <div class="games">
-            <section>
-                <h1>Embodiment</h1>
+    <h1 class="divider">Projects</h1>
+    <div class="container-fluid px-5">
+        <div class="row bg-primary m-5 rounded-3 justify-content-evenly">
+            <div class="col-4 p-0 border border-dark border-5 rounded-3">
+                <h1 class="px-3 pb-2 bg-dark">Embodiment</h1>
                 
-                <h3>Gameplay and Lead Programmer</h3>
+                <h3 class="px-3 text-start">Gameplay and Lead Programmer</h3>
 
-                <p>
+                <p class="px-3 text-start">
                     This was my senior year project for college. I lead a team of 5 to create a 2D puzzle platformer. I programmed and developed our player's movement, as well as the small
                     mechanics necessary for our puzzles. I also created the cutscenes that play during our game.
                 </p>
 
-                <div class="nPage">
+                <div class="">
                     <a href="embodiment.html">Read On--></a>
                 </div>
-            </section>
-
-            <img src="pictures\Embodiment\Embodiment Banner.PNG" alt="">
-            
+            </div>
+        
+            <div class="col-6">
+                <img class="img-fluid" src="pictures\Embodiment\Embodiment Banner.PNG" alt="">
+            </div>
         </div>
+    
 
-        <div class="games">
-            <section>
-                <h1>3 O'Clock Horror</h1>
+        <section>
+            <h1>3 O'Clock Horror</h1>
 
-                <h3>Gameplay Programmer</h3>
-                <p>
-                    This was my junior year project, I was not the team lead but I was a team player. I programmed one of two AI's seen during our game. I programmed our player's movement
-                    and our game.s lighting system. I programmed one of the many puzzles within.
-                </p>
+            <h3>Gameplay Programmer</h3>
+            <p>
+                This was my junior year project, I was not the team lead but I was a team player. I programmed one of two AI's seen during our game. I programmed our player's movement
+                and our game.s lighting system. I programmed one of the many puzzles within.
+            </p>
 
-                <div class="nPage">
-                    <a href="3oclockhorror.html">Read On--></a>
-                </div>
-            </section>
+            <div class="nPage">
+                <a href="3oclockhorror.html">Read On--></a>
+            </div>
+        </section>
 
-            <img src="pictures\3O'ClockHorror\LibraryLogo.jpg" alt="">
+        <img src="pictures\3O'ClockHorror\LibraryLogo.jpg" alt="">
 
-        </div>
-    </main>
+    </div>
     <my-footer></my-footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 </body>
 </html>

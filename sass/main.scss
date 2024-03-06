@@ -1,0 +1,25 @@
+// --- Custom variables ---
+
+// nav stuff
+$nav-link-font-size: 1.75rem;
+
+$navbar-nav-link-padding-x: 3rem;
+$navbar-dark-color: rgb(13, 180, 111);
+
+// import the functions and variables
+@import "../node_modules/bootstrap/scss/_functions.scss";
+@import "../node_modules/bootstrap/scss/_variables.scss";
+@import "../node_modules/bootstrap/scss/maps";
+@import "../node_modules/bootstrap/scss/utilities";
+
+$nav-link-font-weight: $font-weight-bold;
+
+$custom-theme-colors: (
+    "altlight": #5956da,
+    "altdark": #7134b8,
+);
+
+$theme-colors: map-merge($custom-theme-colors, $theme-colors);
+
+// import bootstrap
+@import "../node_modules/bootstrap/scss/bootstrap.scss";
