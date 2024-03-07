@@ -3,44 +3,24 @@ class MyHeader extends HTMLElement
     connectedCallback() 
     {
         this.innerHTML = `
-        <header>
-        <nav class="navbar navbar-expand-lg navbar-dark p-0">
-            <div class="container-fluid">
-              <!-- a class="navbar-brand" href="#">Navbar</a> -->
-
-              <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-              </button> <!-- This is the burger image that appears when the screen gets smaller-->
-
-              <div class="collapse navbar-collapse" id="navbarNavDropdown">
-                <ul class="navbar-nav">
-
-                  <li class="nav-item border-end border-3 border-dark ">
-                    <a class="nav-link" href="index.html">Home</a>
-                  </li>
-
-                  <li class="nav-item dropdown border-end border-3 border-dark">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                      Projects
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDropdownMenuLink">
-                      <li><a class="dropdown-item fs-4" href="embodiment.html">Embodiment</a></li>
-                      <li><a class="dropdown-item fs-4" href="3oclockhorror.html">3 O'Clock Horror</a></li>
+            <header>
+                <nav id="mobile_menu"></nav>
+                <nav id="nav_menu">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="">Projects</a>
+                            <ul>
+                                <li><a href="3oclockhorror.html">3 O'Clock Horror</a></li>
+                                <li><a href="embodiment.html">Embodiment</a></li>
+                                <!-- <li><a href="">Unnamed Samurai Game</a></li>
+                                <li><a href="">Stalker and Brute</a></li> -->
+                            </ul>
+                        </li>
+                        <li><a href="documents/Game Developer Resume.pdf" target="_blank">Resume</a></li>
+                        <li><a href="aboutme.html">About Me</a></li>
                     </ul>
-                  </li>
-
-                  <li class="nav-item border-end border-3 border-dark">
-                    <a class="nav-link" href="documents/Game Developer Resume.pdf" target="_blank">Resume</a>
-                  </li>
-
-                  <li class="nav-item border-end border-3 border-dark">
-                    <a class="nav-link" href="aboutme.html">About Me</a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </nav>
-    </header>
+                </nav>
+            </header>
         `
     }
 }
