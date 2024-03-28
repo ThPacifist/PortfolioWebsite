@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="styles/normalize.css">
     <link rel="stylesheet" href="styles/styles.css">
     <link rel="stylesheet" href="styles/slicknav.css">
-    <link rel="stylesheet" href="styles/projects.css">
+    <!-- <link rel="stylesheet" href="styles/projects.css"> -->
     <link href="css/main.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script src="scripts/jquery.slicknav.min.js"></script>
@@ -20,74 +20,77 @@
         });
     </script>
 </head>
-<body>
+<body class="bg-base">
     <my-header></my-header>
     
-    <main id="clockhorror">
-        <h1>3 O'Clock Horror</h1>
-        <div id="title">
-            <img src="pictures\3O'ClockHorror\NewEntrance.png" alt="">
+    <h1 class="text-center bg-primary py-3 m-0">3 O'Clock Horror</h1>
+    <div class="container-5xl my-1">
+        <div class="row">
+            <div class="col-6">
+                <img class="img-fluid border-5 border-dark" src="pictures\3O'ClockHorror\NewEntrance.png" alt="">
+            </div>
 
-            <ul>
-                <li>Role: Gameplay/Animation Programmer</li>
-                <li>Team Size: 10</li>
-                <li>Development Time: 8 months</li>
-                <li>Platforms: PC (Itch.io and Steam)</li>
-                <li>Engine: Unity</li>
-            </ul>
+            <div class="col-6">
+                <div class="container-fluid m-0">
+                    <div class="row h3 ms-3 mt-3">
+                        <ul>
+                            <li>Role: Gameplay/Animation Programmer</li>
+                            <li>Team Size: 10</li>
+                            <li>Development Time: 8 months</li>
+                            <li>Platforms: PC (Itch.io and Steam)</li>
+                            <li>Engine: Unity</li>
+                        </ul>
+                    </div>
 
-            <div id="sourcelinks">
-                <a href="https://store.steampowered.com/app/1683070/3_Oclock_Horror/" target="_blank"> 
-                    <img src="pictures/steamLogo.png">
-                </a>
-                <a href="https://gssimao.itch.io/3-oclock-horror" target="_blank"> 
-                    <img src="pictures/itchioLogo.svg">
-                </a>
+                    <div class="row justify-content-around align-items-center">
+                        <div class="col-2">
+                            <a href="https://store.steampowered.com/app/1683070/3_Oclock_Horror/" target="_blank"> 
+                                <img class="img-fluid" src="pictures/steamLogo.png">
+                            </a>
+                        </div>
+                        <div class="col-2">
+                            <a href="https://gssimao.itch.io/3-oclock-horror" target="_blank"> 
+                                <img class="img-fluid" src="pictures/itchioLogo.svg">
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
 
-        <div>
-            <h2>Premise</h2>
-            <p>
-                You are a man returning to his great uncle's old mansion in search of either of his father or the fortune that lays within. Solve the puzzles that block
-                your path before the clock strikes 3 am. As you make your way through then mansion, you will notice that a story is being written. This is your story about how you
-                discovered the secrets hidden within the mansion.
-            </p>
-            <hr>
-        </div>
+    <h2 class="bg-primary text-center py-3">Contributions</h2>
+    <div class="container-xl">
+        <figure class="figRight">
+            <img src="pictures\3O'ClockHorror\Lights.gif">
+        </figure>
+        <p>
+            <h3>The Lighting System</h3>
+            This would've been my first real attempt at making video game in a group. I was tasked with creating the lighting system that was our candles and other light sources were going to be. This would've been my first time trying out lighting.
+            <br><br>
+            When all the lights are off, it is completely dark, apart from the player and a few other exceptions. The lighting works by using a sprite mask that reveals the area of anything within its radius.
+            <br>
+            I was really proud of myself for making this. In retrospect, it's not too complicated but at the time it was a huge momemt for me. Because I was struggling with trying to get the effect I wanted, which was hiding and revealing the area. So, finding out that just simply using an image as essentaily a window, is really cool.
+        </p>
 
-        <div>
-            <h2>What I did/learned</h2>
-            <figure class="figRight">
-                <img src="pictures\3O'ClockHorror\Lights.gif">
-            </figure>
-            <p>
-                This would've been my first real attempt at making video game in a group. I was tasked with creating the lighting system that was our candles and other light sources were going to be. This would've been my first time trying out lighting.
-                <br><br>
-                When all the lights are off, it is completely dark, apart from the player and a few other exceptions. The lighting works by using a sprite mask that reveals the area of anything within its radius.
-                <br>
-                I was really proud of myself for making this. In retrospect, it's not too complicated but at the time it was a huge momemt for me. Because I was struggling with trying to get the effect I wanted, which was hiding and revealing the area. So, finding out that just simply using an image as essentaily a window, is really cool.
-            </p>
-
-            <hr>
-            <h3>The Watcher</h3>
-            <p>
-                The Watcher is an AI I built for one of the two enemies within our game. It's supposed to sit in the dark, while following you around the manor. If you get too close to him, it will attack you while jumpscaring you.
-                <br>
-                It follows you by keeping track of what floor you are on and than attempts to find you by trying to teleporting to your room, though it selects a random room from the ones surrounding the player and the one it's located in. That way it can give you some time alone away from him. That way you can take of the puzzles without much hindering you.
-            </p>
-            <hr>
-            <h3>The Picture Puzzle</h3>
-            <figure class="figRight" style="width: 40%">
-                <img src="pictures\3O'ClockHorror\PicturePuzzle.png" alt="">
-            </figure>
-            <p>
-                The picture puzzle was a puzzle I created, where you must locate pictures located in house that you must use in order to solve the puzzle. The pictures had various dates which give you clue as to how it's solved. Said dates are randomly assigned by another script at runtime.
-                <br>
-                I developed the dragging and dropping of the pictures, the win state of the puzzle that would allow you to progress to the next floor. And I also developed the script that randomly assign the dates to the pictures. I found the whole process really fun cause it challenged me to figure out a way on how to give players the ability to drag and drop. I didn't know at the time that UI elements could tell you that the pointer was hovering over them. Which gave me a jumping off point.
-            </p>
-        </div>
-    </main>
+        <hr>
+        <h3>The Watcher</h3>
+        <p>
+            The Watcher is an AI I built for one of the two enemies within our game. It's supposed to sit in the dark, while following you around the manor. If you get too close to him, it will attack you while jumpscaring you.
+            <br>
+            It follows you by keeping track of what floor you are on and than attempts to find you by trying to teleporting to your room, though it selects a random room from the ones surrounding the player and the one it's located in. That way it can give you some time alone away from him. That way you can take of the puzzles without much hindering you.
+        </p>
+        <hr>
+        <h3>The Picture Puzzle</h3>
+        <figure class="figRight" style="width: 40%">
+            <img src="pictures\3O'ClockHorror\PicturePuzzle.png" alt="">
+        </figure>
+        <p>
+            The picture puzzle was a puzzle I created, where you must locate pictures located in house that you must use in order to solve the puzzle. The pictures had various dates which give you clue as to how it's solved. Said dates are randomly assigned by another script at runtime.
+            <br>
+            I developed the dragging and dropping of the pictures, the win state of the puzzle that would allow you to progress to the next floor. And I also developed the script that randomly assign the dates to the pictures. I found the whole process really fun cause it challenged me to figure out a way on how to give players the ability to drag and drop. I didn't know at the time that UI elements could tell you that the pointer was hovering over them. Which gave me a jumping off point.
+        </p>
+    </div>
     <my-footer></my-footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>

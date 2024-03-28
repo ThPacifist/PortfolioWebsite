@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="styles/normalize.css">
     <link rel="stylesheet" href="styles/styles.css">
     <link rel="stylesheet" href="styles/slicknav.css">
-    <link rel="stylesheet" href="styles/projects.css">
+    <!-- <link rel="stylesheet" href="styles/projects.css"> -->
     <link href="css/main.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script src="scripts/jquery.slicknav.min.js"></script>
@@ -20,109 +20,145 @@
         });
     </script>
 </head>
-<body>
+<body class="bg-base">
     <my-header></my-header>
     
-    <main id="embodiment">
-        <h1>Embodiment</h1>
-        <div id="title">
-            <img src="pictures\Embodiment\Embodiment Banner.PNG" alt="">
+    <h1 class="text-center bg-primary py-3 m-0">Embodiment</h1>
+    <div class="container-5xl my-1">
+        <div class="row">
+            <div class="col-6">
+                <img class="img-fluid border-5 border-dark" src="pictures\Embodiment\Embodiment Banner.PNG" alt="">
+            </div>
 
-            <ul>
-                <li>Role: Gameplay/Animation Programmer</li>
-                <li>Team Size: 5</li>
-                <li>Development Time: 8 months</li>
-                <li>Platforms: PC (Steam)</li>
-                <li>Engine: Unity</li>
-            </ul>
-
-            <div id="sourcelinks">
-                <a href="https://store.steampowered.com/app/2066200/Embodiment/" target="_blank"> 
-                    <img src="pictures/steamLogo.png">
-                </a>
+            <div class="col-6">
+                <div class="row h3 ms-3 mt-3">
+                    <ul>
+                        <li>Role: Gameplay/Animation Programmer</li>
+                        <li>Team Size: 5</li>
+                        <li>Development Time: 8 months</li>
+                        <li>Platforms: PC (Steam)</li>
+                        <li>Engine: Unity</li>
+                    </ul>
+                </div>
+                <div class="row justify-content-around align-items-center">
+                    <div class="col-2">
+                        <a href="https://store.steampowered.com/app/2066200/Embodiment/" target="_blank"> 
+                            <img class="img-fluid" src="pictures/steamLogo.png">
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
 
-        <div>
-            <h2>Premise</h2>
-            <p>
-                Take control of the blob, a living pile of ooze that has the ability to take control of skeletons. You must then use these skeletons and there powers to solve puzzles and traverse the lab. Hopefully, being able to find a way out.
-            </p>
-            <hr>
-        </div>
+    <h2 class="bg-primary text-center py-3">Contributions</h2>
+    <div class="container-xl">
+        <h2 class="text-decoration-underline">Programming</h2>
+        <h3>Dynamic Animation</h3>
+        <p class="border-start border-2 border-primary ps-2">
+            A year after the project was finished, I returned to this project to work on something I always wanted to do during the development of this project, but never
+            had the time or reason to do it. <strong> Dynamic Animation. </strong> Animation that is defined from math and drawn using Unity's built-in drawing tools. It would look more fluid, fit with the artstyle, and be a nice detail.
+            <br>
+            I decided to take up this challenge cause I always wanted to see how dynamic animation was done. And after the time that I have spent with it, I've come to a much deeper appreciation for animation and graphic programmers.
+            <br>
+            The first question I asked myself was: How do I draw the tentacles? I already knew what I wanted them to look like, a simple, black, line. I was goign to use Unity's built-in Line renderer to draw the line. I already knew how to use it for this, I just had figure the shape. I wanted the tentacle to function like a bezier curve, so I tried googling how make one in Unity. I found a tutorial that while it wasn't quite what I was looking for it pointed me the right direction. In order to the make the bezier curve tentacle, I would have to use quadratic lerp and cubic lerp functions.
+            <br>
+            These functions take 3 or 4 positions and a fraction between 0 and 1 to create a curve. The fraction is based off a variable that created, that when changed, changes how smooth the line is. For the positions, the last position was the easiest, it's where the foot is. The first position was a bit more difficult. I had a to decide between either starting at the center of the body of the player or the perimeter. I ended going with the center because if first position is at the center and the second at the perimeter it would look the most natural. The third point took some time, but since I just need the tentacle to be planted flat on the ground. All I did was calculate a point that was higher up relative to the rotation of the foot. The second point was by far the most complicated position to calculate.
+            <br>
+            The wanted this posiion to be close to the body. So I figured that if I could clamp the position to be within the radius of the player's body, it would make tentacle emerge from the correct angle. So, I did some research and decided to use a re-engineered circle function, where it would allow me to get the y-position of the this position. While the x-position I got from the foot. Now, it worked, but I later decided to go with a different method. The previous method was too complicated and had a lot of problems with edge cases involving large values. So, I found a way using vectors. Now, as of this writing, I calculate vector that point from the body to the third position, half it, then add it to the body's position.
+            <br>
+            The next challenge was animating the legs to move in natural way. I knew how I wanted it to look. So, I tried to figure out a way to animate the legs. I thought I could use Unity's built-in animator, but given my limited knowledge that I decided to animate it using what I knew best. I animated it in a script. I created that function that when supplied a position will move the foot towards that position, while making it look like it is picking up the foot and setting it back down again. I used the same cubic lerp function to help me create this. The first and last position were just the foot's current position and the supplied position, respectively. The second and third didn't to be to complicated, so they just the first and last positions raised up by a unit. This allows some natural looking movement that makes sense for this fiction character. As of this writing, this is the current version:
+            <br>
+            <!-- Add Gifs/Videos here-->
+            <br>
+            <div class="container-fluid">
+                <!-- Header Row -->
+                <div class="row">
+                    <div class="col">
+                        <h4>Tentacle Drawer: DrawTentacle function</h4>
+                    </div>
+                    
+                </div>
 
-        <div>
-            <h2>What I Learned</h2>
-            <p>
-                This was my senior year project at college. I was both the team anc creative lead of the project. So, not only was I tasked with programming funcationality of the game, but I also had to be the one to divvy up tasks and plan out the roadmap of the game.
-            </p>
-            <hr>
-            <h3>Leadership</h3>
-            <p>
-                As the team lead, I had a lot more responsiblities than other projects I have worked on. In the beginning of the project, I realized my original plan to have the game in 2.5D was not going to work, because it would've taken way too long for us to get the models working. So, I decided to scrap that idea and switched to more detail 2D artstyle.
-                <br>
-                After a while though, we realized the current artstyle wasn't working, but thanks to an idea from one of my teammates. We switched to a more simplistic artstyle. It would allow our game to have more distinct artstyle and stand out.
-                <br>
-                Another issue we ran into was with the scripts related to the player. Specifically, the scripts related too the emboding of skeletons and the skeletons themselves. The scripts were becoming too large and cumbersome. So, I decided that me and otehr program would work to refactor the code so that it was more organized and worked better for what we needed. It took some time, but I was able to come with plan and I believe it worked out for the better.
-            </p>
-            <hr>
-            <h3>Programming</h3>
-            <p>
-                For the programming side of the project, I worked on some of the small mechanics used throughout the puzzles, such as buttons, lever switches, a treadmill, etc.
-                <br>
-                I also had a role in the refactoring of our player scripts. This was a huge project. We had to split up one of our biggest scripts into 5-6 other scripts, that way the code would be more organized and simpler. We made use of c# inheritance and encapsulation funcationality as much as we could to help simplfy the process. The end goal was to have all the similar behaviors in one place and the behaviors distinct to each form in separate scripts. In the end it helped, we were able to make the code more organized and made other future additions easier to add.
-                <br>
-                Besides the major script rework, I also work on the specific abilities of each of the forms, like:
-                <ul id="blobForms">
-                    <li>The Blob
-                        <figure>
-                            <figcaption>Swing from objects using its tentacles, pick up skeleton piles, and embody skeletons</figcaption>
-                            <img src="pictures\Embodiment\BlobSwinging.gif" >
-                            <img src="pictures\Embodiment\HumanEmbody.gif">
-                        </figure>
-                    </li>
-                    <li>The Human
-                        <figure>
-                            <figcaption>Pick up, push, and throw boxes</figcaption>
-                            <img src="pictures\Embodiment\Human Picking Up Boxes.gif">
-                            <img src="pictures\Embodiment\Human Pushing Boxes.gif">
-                        </figure>
-                    </li>   
-                    <li>The Bat
-                        <figure>
-                            <figcaption>Fly and also pick up boxes</figcaption>
-                            <img src="pictures\Embodiment\BatEmbody.gif">
-                        </figure>
-                    </li>
-                    <li>The Fish
-                        <figure>
-                            <figcaption>Swims and can do a tail spin to flip switches</figcaption>
-                            <img src="pictures\Embodiment\Swimming.gif">
-                            <img src="pictures\Embodiment\Spinning.gif">
-                        </figure>
-                    </li>
-                    <li>The Cat
-                        <figure>
-                            <figcaption>Climb walls and is the fastest on land</figcaption>
-                            <img src="pictures\Embodiment\Cat Climbing.gif">
-                        </figure>
-                    </li>
-                </ul>
-            </p>
-        </div>
+                <div class="row">
+                    <div class="col-12 col-lg-5">
+                        <p>
+                            This is the function that I use to create the tentacle itself. First, it calculates the third position by using the foot's position and the up vector of the transform of the foot. It then calculates a vector going from the body of player to this position and then adds the body's position and stores the outcome in a new variable. I then calculate the path of the tentacle using the cubic lerp formula, while storing each position into an array. Finally, we use built-in function with the line renderer component to set all of these points and create the tentacle.
+                        </p>
+                        <div class="text-start">
+                            <!-- File Download -->
+                            <a href="" class="btn btn-outline-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-file-earmark-arrow-down" viewBox="0 0 16 16">
+                                    <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293z"/>
+                                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                                  </svg>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-7 col-lg-0 d-none d-lg-block">
+                        <img src="pictures\Embodiment\DrawTentacle.PNG" alt="" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+            <br>
+        </p>
+
+        <p>
+            I also had a role in the refactoring of our player scripts. This was a huge project. We had to split up one of our biggest scripts into 5-6 other scripts, that way the code would be more organized and simpler. We made use of c# inheritance and encapsulation funcationality as much as we could to help simplfy the process. The end goal was to have all the similar behaviors in one place and the behaviors distinct to each form in separate scripts. In the end it helped, we were able to make the code more organized and made other future additions easier to add.
+            <!--Put Accoridon of new and old code Here-->
+            <br><br>
+
+            Besides the major script rework, I also work on the specific abilities of each of the forms, like:
+            <ul id="blobForms">
+                <li>The Blob
+                    <figure>
+                        <figcaption>Swing from objects using its tentacles, pick up skeleton piles, and embody skeletons</figcaption>
+                        <img src="pictures\Embodiment\BlobSwinging.gif" >
+                        <img src="pictures\Embodiment\HumanEmbody.gif">
+                    </figure>
+                </li>
+                <li>The Human
+                    <figure>
+                        <figcaption>Pick up, push, and throw boxes</figcaption>
+                        <img src="pictures\Embodiment\Human Picking Up Boxes.gif">
+                        <img src="pictures\Embodiment\Human Pushing Boxes.gif">
+                    </figure>
+                </li>   
+                <li>The Bat
+                    <figure>
+                        <figcaption>Fly and also pick up boxes</figcaption>
+                        <img src="pictures\Embodiment\BatEmbody.gif">
+                    </figure>
+                </li>
+                <li>The Fish
+                    <figure>
+                        <figcaption>Swims and can do a tail spin to flip switches</figcaption>
+                        <img src="pictures\Embodiment\Swimming.gif">
+                        <img src="pictures\Embodiment\Spinning.gif">
+                    </figure>
+                </li>
+                <li>The Cat
+                    <figure>
+                        <figcaption>Climb walls and is the fastest on land</figcaption>
+                        <img src="pictures\Embodiment\Cat Climbing.gif">
+                    </figure>
+                </li>
+            </ul>
+            <br><br>
+            
+            For the programming side of the project, I worked on some of the small mechanics used throughout the puzzles, such as buttons, lever switches, a treadmill, etc.
+        </p>
         
-        <div>
-            <h2>Extracurricular Work</h2>
-            <p>
-                A year after the project was finished, I returned to this project to work on something I always wanted to do during the development of this project, but never
-                had the time or reason to do it. <strong> Dynamic Animation. </strong> Animation that is defined from math and drawn using Unity's built-in drawing tools. It would look more 
-                fluid, fit with the artstyle, and be a nice detail.
-                <br>
-                I decided to take up this challenge cause I always wanted to see how dynamic animation was done. 
-            </p>
-            <hr>
-        </div>
-    </main>
+        <hr>
+        <h3>Leadership</h3>
+        <p>
+            As the team lead, I had a lot more responsiblities than other projects I have worked on. In the beginning of the project, I realized my original plan to have the game in 2.5D was not going to work, because it would've taken way too long for us to get the models working. So, I decided to scrap that idea and switched to more detail 2D artstyle.
+            <br>
+            After a while though, we realized the current artstyle wasn't working, but thanks to an idea from one of my teammates. We switched to a more simplistic artstyle. It would allow our game to have more distinct artstyle and stand out.
+            <br>
+            Another issue we ran into was with the scripts related to the player. Specifically, the scripts related too the emboding of skeletons and the skeletons themselves. The scripts were becoming too large and cumbersome. So, I decided that me and otehr program would work to refactor the code so that it was more organized and worked better for what we needed. It took some time, but I was able to come with plan and I believe it worked out for the better.
+        </p>
+    </div>
     <my-footer></my-footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
