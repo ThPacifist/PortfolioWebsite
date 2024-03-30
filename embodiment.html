@@ -51,9 +51,9 @@
         </div>
     </div>
 
-    <h2 class="bg-primary text-center py-3 mb-0">Contributions</h2>
+    <h2 class="bg-primary text-center py-3 mb-0 display-4">Contributions</h2>
     <div class="container-xl">
-        <h2 class="text-decoration-underline bg-black p-2 ps-1 mt-0">Programming</h2>
+        <h1 class="text-decoration-underline bg-black p-2 ps-1 mt-0">Programming</h1>
         <h3>Dynamic Animation</h3>
         <p class="border-start border-2 border-primary ps-2">
             A year after the project was finished, I returned to this project to work on something I always wanted to do during the development of this project, but never
@@ -69,9 +69,11 @@
             <br>
             The next challenge was animating the legs to move in natural way. I knew how I wanted it to look. So, I tried to figure out a way to animate the legs. I thought I could use Unity's built-in animator, but given my limited knowledge that I decided to animate it using what I knew best. I animated it in a script. I created that function that when supplied a position will move the foot towards that position, while making it look like it is picking up the foot and setting it back down again. I used the same cubic lerp function to help me create this. The first and last position were just the foot's current position and the supplied position, respectively. The second and third didn't to be to complicated, so they just the first and last positions raised up by a unit. This allows some natural looking movement that makes sense for this fiction character. As of this writing, this is the current version:
             <br>
-            <!-- Add Gifs/Videos here-->
+            <div class="container-lg text-center border-start border-2 border-primary">
+                <img src="pictures\Embodiment\DynamicAnimation.gif" alt="" class="img-fluid">
+            </div>
             <br>
-            <div class="container-fluid">
+            <div class="container-fluid border-start border-2 border-primary">
                 <!-- Header Row -->
                 <div class="row">
                     <div class="col">
@@ -87,10 +89,9 @@
                         </p>
                         <div class="text-start">
                             <!-- File Download -->
-                            <a href="" class="btn btn-outline-primary">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-file-earmark-arrow-down" viewBox="0 0 16 16">
-                                    <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293z"/>
-                                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                            <a href="pictures\Embodiment\Files\TentacleDrawer.cs" target="_blank" class="btn btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="right" title="View File">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-file-earmark" viewBox="0 0 16 16">
+                                    <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
                                   </svg>
                             </a>
                         </div>
@@ -103,12 +104,181 @@
             <br>
         </p>
 
+        <h3>Player Refactor</h3>
         <p>
-            I also had a role in the refactoring of our player scripts. This was a huge project. We had to split up one of our biggest scripts into 5-6 other scripts, that way the code would be more organized and simpler. We made use of c# inheritance and encapsulation funcationality as much as we could to help simplfy the process. The end goal was to have all the similar behaviors in one place and the behaviors distinct to each form in separate scripts. In the end it helped, we were able to make the code more organized and made other future additions easier to add.
-            <!--Put Accoridon of new and old code Here-->
+            Explain the intended funcationality of these scripts.
             <br><br>
+            I also had a role in the refactoring of our player scripts. This was a huge project. We had to split up one of our biggest scripts into 5-6 other scripts, that way the code would be more organized and simpler. We made use of c# inheritance and encapsulation funcationality as much as we could to help simplfy the process. The end goal was to have all the similar behaviors in one place and the behaviors distinct to each form in separate scripts. In the end it helped, we were able to make the code more organized and made other future additions easier to add.
+            <!-- Before Player Refactor -->
+            <h4>Old Code</h4>
+            <div class="accordion" id="OldPlayerScripts">
+                <div class="accordion-item">
+                  <h2 class="accordion-header" id="plyController">
+                    <button class="accordion-button collapsed bg-primary text-black" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePly" aria-expanded="true" aria-controls="collapsePly">
+                      PlyController.cs
+                    </button>
+                  </h2>
+                  <div id="collapsePly" class="accordion-collapse collapse" aria-labelledby="plyController" data-bs-parent="#OldPlayerScripts">
+                    <div class="accordion-body bg-black">
+                        <code class="text-primary">
+                            Code Goes Here
+                        </code>
+                    </div>
+                  </div>
+                </div>
+                <div class="accordion-item">
+                  <h2 class="accordion-header" id="controlMovement">
+                    <button class="accordion-button collapsed bg-primary text-black" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCM" aria-expanded="false" aria-controls="collapseCM">
+                      ControlMovement.cs
+                    </button>
+                  </h2>
+                  <div id="collapseCM" class="accordion-collapse collapse" aria-labelledby="controlMovement" data-bs-parent="#OldPlayerScripts">
+                    <div class="accordion-body bg-black">
+                        <code class="text-primary">
+                            Code Goes Here
+                        </code>
+                    </div>
+                  </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="specialInteractions">
+                        <button class="accordion-button collapsed bg-primary text-black" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSI" aria-expanded="false" aria-controls="collapseSI">
+                            SpecialInteractions.cs
+                        </button>
+                    </h2>
+                    <div id="collapseSI" class="accordion-collapse collapse" aria-labelledby="specialInteractions" data-bs-parent="#OldPlayerScripts">
+                        <div class="accordion-body bg-black">
+                            <code class="text-primary">
+                                Code Goes Here
+                            </code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <br><br>
+        <!-- After Player Refactor -->
+        <h4>New Code</h4>
+        <div class="accordion" id="NewPlayerScripts">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="controller">
+                    <button class="accordion-button collapsed bg-primary text-black" type="button" data-bs-toggle="collapse" data-bs-target="#cont" aria-expanded="false" aria-controls="cont">
+                        Controller.cs
+                    </button>
+                </h2>
+                <div id="cont" class="accordion-collapse collapse" aria-labelledby="controller" data-bs-parent="#NewPlayerScripts">
+                    <div class="accordion-body bg-black">
+                        <code class="text-primary">
+                            Code Goes Here
+                        </code>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="blobController">
+                    <button class="accordion-button collapsed bg-primary text-black" type="button" data-bs-toggle="collapse" data-bs-target="#blobCont" aria-expanded="false" aria-controls="blobCont">
+                        BlobController.cs
+                    </button>
+                </h2>
+                <div id="blobCont" class="accordion-collapse collapse" aria-labelledby="blobController" data-bs-parent="#NewPlayerScripts">
+                    <div class="accordion-body bg-black">
+                        <code class="text-primary">
+                            Code Goes Here
+                        </code>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="batController">
+                    <button class="accordion-button collapsed bg-primary text-black" type="button" data-bs-toggle="collapse" data-bs-target="#batCont" aria-expanded="false" aria-controls="batCont">
+                        BatController.cs
+                    </button>
+                </h2>
+                <div id="batCont" class="accordion-collapse collapse" aria-labelledby="batController" data-bs-parent="#NewPlayerScripts">
+                    <div class="accordion-body bg-black">
+                        <code class="text-primary">
+                            Code Goes Here
+                        </code>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="humanController">
+                    <button class="accordion-button collapsed bg-primary text-black" type="button" data-bs-toggle="collapse" data-bs-target="#humanCont" aria-expanded="false" aria-controls="humanCont">
+                        HumanController.cs
+                    </button>
+                </h2>
+                <div id="humanCont" class="accordion-collapse collapse" aria-labelledby="humanController" data-bs-parent="#NewPlayerScripts">
+                    <div class="accordion-body bg-black">
+                        <code class="text-primary">
+                            Code Goes Here
+                        </code>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="catController">
+                    <button class="accordion-button collapsed bg-primary text-black" type="button" data-bs-toggle="collapse" data-bs-target="#catCont" aria-expanded="false" aria-controls="catCont">
+                        CatController.cs
+                    </button>
+                </h2>
+                <div id="catCont" class="accordion-collapse collapse" aria-labelledby="catController" data-bs-parent="#NewPlayerScripts">
+                    <div class="accordion-body bg-black">
+                        <code class="text-primary">
+                            Code Goes Here
+                        </code>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="fishController">
+                    <button class="accordion-button collapsed bg-primary text-black" type="button" data-bs-toggle="collapse" data-bs-target="#fishCont" aria-expanded="false" aria-controls="fishCont">
+                        FishController.cs
+                    </button>
+                </h2>
+                <div id="fishCont" class="accordion-collapse collapse" aria-labelledby="fishController" data-bs-parent="#NewPlayerScripts">
+                    <div class="accordion-body bg-black">
+                        <code class="text-primary">
+                            Code Goes Here
+                        </code>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="playerBrain">
+                    <button class="accordion-button collapsed bg-primary text-black" type="button" data-bs-toggle="collapse" data-bs-target="#playBrain" aria-expanded="false" aria-controls="playBrain">
+                        PlayerBrain.cs
+                    </button>
+                </h2>
+                <div id="playBrain" class="accordion-collapse collapse" aria-labelledby="playerBrain" data-bs-parent="#NewPlayerScripts">
+                    <div class="accordion-body bg-black">
+                        <code class="text-primary">
+                            Code Goes Here
+                        </code>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="embodiment">
+                    <button class="accordion-button collapsed bg-primary text-black" type="button" data-bs-toggle="collapse" data-bs-target="#embody" aria-expanded="false" aria-controls="embody">
+                        Embodiment.cs
+                    </button>
+                </h2>
+                <div id="embody" class="accordion-collapse collapse" aria-labelledby="embodiment" data-bs-parent="#NewPlayerScripts">
+                    <div class="accordion-body bg-black">
+                        <code class="text-primary">
+                            Code Goes Here
+                        </code>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        </p>
+        <br>
 
-            Besides the major script rework, I also work on the specific abilities of each of the forms, like:
+        <h3>Player Abilites</h3>
+        <p>
+            Besides the major script rework, I also worked on the specific abilities of each of the forms, like:
             <ul id="blobForms">
                 <li>The Blob
                     <figure>

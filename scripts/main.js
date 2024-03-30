@@ -50,14 +50,21 @@ class MyFooter extends HTMLElement
     connectedCallback() 
     {
         this.innerHTML = `
-            <footer>
-                <section id="links">
-                    <a href="mailto:benjamin.henschen@gmail.com"><img src="pictures/gmail.png"/></a>&nbsp;&nbsp;&nbsp;&nbsp;
-                    <a href="https://www.linkedin.com/in/benjamin-henschen/"><img src="pictures/linkedin.png"/></a>&nbsp;&nbsp;&nbsp;&nbsp;
-                    <a href="https://github.com/ThPacifist"><img src="pictures/github.png"/></a>&nbsp;&nbsp;&nbsp;&nbsp;
-                    <a href="https://www.youtube.com/channel/UCiC15eythbplhk4lK41BqMg?view_as=subscriber"><img src="pictures/youtube.png"/></a>
-                </section>
-            </footer>
+              <footer>
+              <div class="container-xl">
+                <div class="row">
+                  <div class="col-6 border-end border-3 border-black pt-2 pb-1">
+                    <a href="mailto:benjamin.henschen@gmail.com" class="mx-3"><img src="pictures/gmail.png" style="height: 32px"/></a>
+                    <a href="https://www.linkedin.com/in/benjamin-henschen/" class="mx-3"><img src="pictures/linkedin.png" style="height: 32px"/></a>
+                    <a href="https://github.com/ThPacifist" class="mx-3"><img src="pictures/github.png" style="height: 32px"/></a>
+                    <a href="https://www.youtube.com/channel/UCiC15eythbplhk4lK41BqMg?view_as=subscriber" class="mx-3"><img src="pictures/youtube.png" style="height: 32px" /></a>
+                  </div>
+                  <div class="col-6 pt-2">
+                    <p class="fs-5"> Created by Benjamin Henschen</p>
+                  </div>
+                </div>
+              </div>
+          </footer>
         `
     }
 }
