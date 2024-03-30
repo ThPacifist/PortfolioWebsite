@@ -13,6 +13,9 @@ p {
 main ul {
     font-size: 210%
 }
+main ul li ul {
+    font-size: 75%;
+}
 
 button {
     font-size: 220%;
