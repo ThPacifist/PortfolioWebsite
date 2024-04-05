@@ -69,7 +69,7 @@
             <br>
             The next challenge was animating the legs to move in natural way. I knew how I wanted it to look. So, I tried to figure out a way to animate the legs. I thought I could use Unity's built-in animator, but given my limited knowledge that I decided to animate it using what I knew best. I animated it in a script. I created that function that when supplied a position will move the foot towards that position, while making it look like it is picking up the foot and setting it back down again. I used the same cubic lerp function to help me create this. The first and last position were just the foot's current position and the supplied position, respectively. The second and third didn't to be to complicated, so they just the first and last positions raised up by a unit. This allows some natural looking movement that makes sense for this fiction character. As of this writing, this is the current version:
             <br>
-            <div class="container-lg text-center border-start border-2 border-primary">
+            <div class="container-lg text-center">
                 <img src="pictures\Embodiment\DynamicAnimation.gif" alt="" class="img-fluid">
             </div>
             <br>
@@ -104,11 +104,11 @@
             <br>
         </p>
 
-        <h3>Player Refactor</h3>
+        <h3>Player Scripts/Refactor</h3>
         <p>
-            Explain the intended funcationality of these scripts.
+            The scripts are what controls the player's embody mechanic and the attibutes of forms. To create this, I pictured the process as if I was slotting the game cartridges into a handheld game console, where the separate forms are the cartridges. So, when you "slot in" a different form all the values and abilites of the previous form would be switched out for the new form. 
             <br><br>
-            I also had a role in the refactoring of our player scripts. This was a huge project. We had to split up one of our biggest scripts into 5-6 other scripts, that way the code would be more organized and simpler. We made use of c# inheritance and encapsulation funcationality as much as we could to help simplfy the process. The end goal was to have all the similar behaviors in one place and the behaviors distinct to each form in separate scripts. In the end it helped, we were able to make the code more organized and made other future additions easier to add.
+            The first iteration of this system was made up of 3 scripts, which are listed below. The <strong>PlyController</strong> housed most of the players code, such as movement, animation, interactions, and special edge cases for other behaviors. This was one of the first scripts created for the game and just served as the quickest way to get the behaviors we wanted out of the player. So, it ended up becoming quite a beast of code. The <strong>ControlMovement</strong> script controls the embodiment mechanic. The goal of this script was to take care of all the values, functions, and attributes that needed to be changed, during the embodying process. The <strong>SpecialInteractions</strong> script housed all the unique abilities and interactions of each of the different forms, like the blob's tentacle grab, the human's pushing and pulling of boxes, etc.
             <!-- Before Player Refactor -->
             <h4>Old Code</h4>
             <div class="accordion" id="OldPlayerScripts">
@@ -119,10 +119,698 @@
                     </button>
                   </h2>
                   <div id="collapsePly" class="accordion-collapse collapse" aria-labelledby="plyController" data-bs-parent="#OldPlayerScripts">
-                    <div class="accordion-body bg-black">
-                        <code class="text-primary">
-                            Code Goes Here
-                        </code>
+                    <div class="accordion-body bg-black overflow-auto">
+                        <pre>
+                            <code class="text-primary">
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using System;
+using UnityEngine.InputSystem;
+
+[RequireComponent(typeof(PlayerInput))]
+public class PlyController : MonoBehaviour
+{
+    //Assets and Public Variables
+    PlayerControls PlyCtrl;
+    public Transform attackBox;
+    public Rigidbody2D rb;
+    public Animator plyAnim;
+    public SpriteRenderer plySprite;
+    public CapsuleCollider2D capCollider; 
+    public static Action Interact = delegate { };
+    public static Action Embody = delegate { };
+    public static Action Special = delegate { };
+    public static Action Pause = delegate { };
+    public static Action Death = delegate { };
+    public ControlMovement cntrlMove;
+    public float speed;
+    public float jumpHeight;
+    public bool canMove = true;
+    public bool canJump = true;
+    public float angle;
+
+    [SerializeField]
+    LayerMask groundLayerMask;
+
+    //Private Variables
+    public bool OnWall = false;
+    bool batJump = true;
+    Vector2 catDir;
+    AudioManager audioManager;
+
+    [HideInInspector]
+    public bool treadmill = false;
+
+    bool right;
+    bool left;
+
+    public bool Right
+    { get { return right; } }
+    public bool Left
+    { get { return left; } }
+
+    [SerializeField]
+    bool inWater = false;
+
+    public bool InWater
+    { get { return inWater; } }
+
+    [SerializeField]
+    SpecialInteractions spcInter;
+
+    private void Awake()
+    {
+        PlyCtrl = new PlayerControls();
+        this.gameObject.transform.position = GameAction.PlaceColOnGround(capCollider);
+        TransitionController.slideInAction = UnFreezePlayer;
+    }
+
+    private void OnEnable()
+    {
+        PlyCtrl.Enable();
+    }
+
+    void OnDisable()
+    {
+        PlyCtrl.Disable();
+    }
+
+    //Start is called at the start of this script
+    private void Start()
+    {
+        audioManager = GameObject.FindObjectOfType<AudioManager>();
+        //Special Interact
+        PlyCtrl.Player.Special.performed += _ => SpecialS();
+
+        //Regular interact
+        PlyCtrl.Player.Interact.performed += _ => InteractI();
+
+        //Jump
+        PlyCtrl.Player.Jump.performed += _ => Jump();
+
+        //Embody
+        PlyCtrl.Player.Embody.performed += _ => EmbodyE();
+
+        //Pause
+        PlyCtrl.Player.Pause.performed += _ => Pause();
+    }
+
+    // Update is called once per frame
+    void FixedUpdate()
+    {
+        if (canMove && !treadmill)
+        {
+            //Movement for Fish
+            if (this.CompareTag("Fish"))
+            {
+                //Movement when in water
+                if (inWater)
+                {
+                    //Move when the player is pressing buttons
+                    if (PlyCtrl.Player.FishInWater.ReadValue<Vector2>() != Vector2.zero)
+                    {
+                        float x = 0, y = 0;
+                        //Checks if either the y or x velocity is exceeding the speed
+                        if(Math.Abs(rb.velocity.x) < speed)
+                        {
+                            x = 1;
+                        }
+                        if(Math.Abs(rb.velocity.y) < speed)
+                        {
+                            y = 1;
+                        }
+
+                        rb.AddForce(new Vector2(x, y) * PlyCtrl.Player.FishInWater.ReadValue<Vector2>() * 20 * rb.mass);
+                    }
+                }
+                //Movement when on the ground
+                else if (isGrounded())
+                {
+                    //Move when the player is pressing buttons
+                    if (PlyCtrl.Player.Movement.ReadValue<float>() != 0)
+                    {
+                        if (Math.Abs(rb.velocity.x) < speed * 0.3f)
+                        {
+                            rb.AddForce(Vector2.right * PlyCtrl.Player.Movement.ReadValue<float>() * 20 * rb.mass);
+                        }
+                    }
+                }
+                else
+                {
+                    //Move when the player is pressing the direction
+                    if (PlyCtrl.Player.Movement.ReadValue<float>() != 0)
+                    {
+                        rb.velocity += (Vector2.right * PlyCtrl.Player.Movement.ReadValue<float>() * speed * 0.5f) - new Vector2(rb.velocity.x, 0);
+                    }
+                }
+            }
+            else
+            {
+                //Cat climb movement
+                if (this.CompareTag("Cat") && OnWall)
+                {
+                    rb.gravityScale = 0;
+                    rb.AddForce(catDir, ForceMode2D.Impulse);
+                    if (PlyCtrl.Player.FishInWater.ReadValue<Vector2>() != Vector2.zero)
+                    {
+                        //Checks if the player is pushing up or down
+                        if (PlyCtrl.Player.FishInWater.ReadValue<Vector2>().y != 0)
+                        {
+                            rb.velocity += (Vector2.up * PlyCtrl.Player.FishInWater.ReadValue<Vector2>().y * speed * 0.5f) - new Vector2(0, rb.velocity.y);
+                            if (audioManager != null)
+                            {
+                                audioManager.Play("catClimb");
+                            }
+                        }
+                        //Otherwise checks if they push left or right, meaning they can
+                        else
+                        {
+                            if (audioManager != null)
+                            {
+                                //Debug.Log("Inside if");
+                                audioManager.Stop("catClimb");
+                            }
+                            if (PlyCtrl.Player.FishInWater.ReadValue<Vector2>().x != 0)
+                            {
+                                rb.velocity += (Vector2.right * PlyCtrl.Player.FishInWater.ReadValue<Vector2>().x * speed * 0.5f) - new Vector2(rb.velocity.x, 0);
+                            }
+                        }
+                    }
+                    else if (audioManager != null)
+                    {
+                        audioManager.Stop("catClimb");
+                    }
+                }
+                //Regular grounded movement
+                else if (PlyCtrl.Player.Movement.ReadValue<float>() != 0)
+                {
+                    //Movement
+                    if (Math.Abs(rb.velocity.x) < speed && !spcInter.isAttached)
+                    {
+                        rb.AddForce(Vector2.right * PlyCtrl.Player.Movement.ReadValue<float>() * 20 * rb.mass);
+                    }
+                    else if (spcInter.isAttached)
+                    {
+                        if (PlyCtrl.Player.Movement.ReadValue<float>() != 0)
+                        {
+                            rb.AddForce(Vector2.right * PlyCtrl.Player.Movement.ReadValue<float>() * 0.6f, ForceMode2D.Impulse);
+                        }
+                    }
+
+                    //Audio
+                    if (audioManager != null)
+                    {
+                        audioManager.Stop("catClimb");
+                        if (tag == "Blob")
+                        {
+                            audioManager.Play("blobStep");
+                        }
+                    }
+                }
+                else
+                {
+                    if (audioManager != null)
+                    {
+                        audioManager.Stop("blobStep");
+                    }
+                }
+            }
+        }
+
+        //If Cat is not on a wall
+        if(!OnWall)
+        {
+            rb.gravityScale = 1;
+            if (audioManager != null)
+            {
+                audioManager.Stop("catClimb");
+            }
+        }
+
+        if(!isGrounded())
+        {
+            if (audioManager != null)
+            {
+                audioManager.Stop("blobStep");
+            }
+        }
+
+        //Remove momentum while on ground
+        if (PlyCtrl.Player.Movement.ReadValue<float>() == 0 && isGrounded())
+        {
+            //Reduce the player's speed by half
+            rb.velocity *= new Vector2(0.75f, 1);
+            //Change any held boxes velocity to match the player
+            if (spcInter.heldBox != null)
+            {
+                spcInter.heldBox.velocity = rb.velocity;
+            }
+        }
+
+        //Remove momentum while on wall
+        if(PlyCtrl.Player.FishInWater.ReadValue<Vector2>().y == 0 && OnWall)
+        {
+            rb.velocity *= new Vector2(1, 0.5f);
+        }
+
+        //int BlobRespawnID = Animator.StringToHash("BlobRespawn");
+        //if (plyAnim.GetCurrentAnimatorStateInfo(0).shortNameHash == BlobRespawnID) return;
+    
+        #region Animation Block
+        if (PlyCtrl.Player.Movement.ReadValue<float>() != 0 && canMove)
+        {
+            plyAnim.SetBool("Walking", true);
+        }
+        else
+        {
+            plyAnim.SetBool("Walking", false);
+        }
+
+        if (isGrounded())
+        {
+            plyAnim.SetBool("isJumping", false);
+        }
+        else
+        {
+            plyAnim.SetBool("isJumping", true);
+        }
+
+        //Check if the blob is attached
+        if (spcInter.isAttached)
+        {
+            plyAnim.SetBool("Swing", true);
+        }
+        else
+        {
+            plyAnim.SetBool("Swing", false);
+        }
+
+        //Climbing on Wall as cat
+        if (OnWall)
+        {
+            plyAnim.SetBool("Climb", true);
+
+            if(PlyCtrl.Player.FishInWater.ReadValue<Vector2>().y != 0)
+            {
+                plyAnim.SetBool("Walking", true);
+            }
+            else
+            {
+                plyAnim.SetBool("Walking", false);
+            }
+        }
+        else
+        {
+            plyAnim.SetBool("Climb", false);
+        }
+
+        //Pushing and Pulling boxes as Human
+        if (!spcInter.HboxHeld)
+        {
+            if (canMove)
+            {
+                //Set facing direction
+                if (PlyCtrl.Player.Movement.ReadValue<float>() > 0)
+                {
+                    this.gameObject.transform.localScale = new Vector3(-1 * Mathf.Abs(transform.localScale.x), Mathf.Abs(transform.localScale.y),
+                        Mathf.Abs(transform.localScale.z));
+                    right = true;
+                    left = false;
+                }
+                else if (PlyCtrl.Player.Movement.ReadValue<float>() < 0)
+                {
+                    this.gameObject.transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x), Mathf.Abs(transform.localScale.y),
+                        Mathf.Abs(transform.localScale.z));
+                    left = true;
+                    right = false;
+                }
+                else
+                {
+                    left = false;
+                    right = false;
+                }
+            }
+        }
+        else
+        {
+            //Set to Pushing or Pulling
+            if (this.transform.localScale.x > 0)//When player is facing left, while holding a heavy box
+            {
+                if (PlyCtrl.Player.Movement.ReadValue<float>() > 0)//When player is pressing right
+                {
+                    plyAnim.SetInteger("Facing", -1);
+                }
+                else if (PlyCtrl.Player.Movement.ReadValue<float>() < 0)//When player is pressing left
+                {
+                    plyAnim.SetInteger("Facing", 1);
+                }
+                else
+                {
+                    plyAnim.SetInteger("Facing", 0);
+                }
+            }
+            else if (this.transform.localScale.x < 0)//When player is facing right, while holding a heavy box
+            {
+                if (PlyCtrl.Player.Movement.ReadValue<float>() > 0)//When player is pressing right
+                {
+                    plyAnim.SetInteger("Facing", 1);
+                }
+                else if (PlyCtrl.Player.Movement.ReadValue<float>() < 0)//When player is pressing left
+                {
+                    plyAnim.SetInteger("Facing", -1);
+                }
+                else
+                {
+                    plyAnim.SetInteger("Facing", 0);
+                }
+            }
+        }
+
+        //Moving in Water as fish
+        if(tag == "Fish" && inWater)
+        {
+            if(PlyCtrl.Player.FishInWater.ReadValue<Vector2>() != Vector2.zero)
+            {
+                plyAnim.SetBool("Walking", true);
+            }
+            else
+            {
+                plyAnim.SetBool("Walking", false);
+            }
+            angle = Vector2.SignedAngle(Vector2.left, PlyCtrl.Player.FishInWater.ReadValue<Vector2>());
+
+            /*if(angle > 90)
+            {
+                angle = transform.localScale.x * (90 - (angle - 90));
+            }
+            else if(angle < -90)
+            {
+                angle = transform.localScale.x * (90 + (angle + 90));
+            }*/
+
+            Quaternion rotation = Quaternion.Euler(0, 0, angle);
+
+            //transform.rotation = rotation;
+        }
+
+        //Set direction as cat on wall
+        if(OnWall && catDir == Vector2.right)
+        {
+            this.gameObject.transform.localScale = new Vector3(-1 * Mathf.Abs(transform.localScale.x), Mathf.Abs(transform.localScale.y),
+                Mathf.Abs(transform.localScale.z));
+            right = true;
+            left = false;
+        }
+        else if(OnWall && catDir == Vector2.left)
+        {
+            this.gameObject.transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x), Mathf.Abs(transform.localScale.y),
+                Mathf.Abs(transform.localScale.z));
+            left = true;
+            right = false;
+        }
+
+        //Checking if on ground as bat while carrying box
+        if (spcInter.objectHeld && tag == "Bat")
+        {
+            if (isBoxGrounded(spcInter.heldBox))
+            {
+                plyAnim.SetBool("isJumping", false);
+            }
+        }
+        #endregion
+    }
+
+    //Special check
+    private void SpecialS()
+    {
+        if(Time.timeScale > 0)
+        {
+            Special();
+        }
+    }
+
+    //Interact check
+    private void InteractI()
+    {
+        if (Time.timeScale > 0)
+        {
+            Interact();
+        }
+    }
+
+    //Jump
+    private void Jump()
+    {
+        if (canJump)
+        {
+            //If time is moving, do something
+            if (Time.timeScale > 0)
+            {
+                //Fly when bat
+                if (CompareTag("Bat") && batJump)
+                {
+                    batJump = false;
+                    rb.AddForce((Vector2.up * jumpHeight) - new Vector2(0, rb.velocity.y), ForceMode2D.Impulse);
+                    plyAnim.SetTrigger("Flap");
+                    if (audioManager != null)
+                    {
+                        audioManager.Play("wingFlap");
+                    }
+                    StartCoroutine(FlyCoolDown());
+                }
+                //Side jump when climbing
+                else if (CompareTag("Cat") && OnWall)
+                {
+                    rb.AddForce((-catDir * 25) - new Vector2(rb.velocity.x, 0), ForceMode2D.Impulse);
+                    catDir = -catDir;
+                }
+                //Regular jump when appropriate
+                else
+                {
+                    if (isGrounded() || inWater)
+                    {
+                        rb.AddForce((Vector2.up * jumpHeight) /*- new Vector2(0, rb.velocity.y)*/, ForceMode2D.Impulse);
+
+                    }
+                    else if (spcInter.isAttached)
+                    {
+                        spcInter.ShootTendril();
+                        rb.AddForce(rb.velocity.normalized * 5, ForceMode2D.Impulse);
+                    }
+                }
+                plyAnim.SetTrigger("takeOff");
+                plyAnim.SetBool("isJumping", true);
+            }
+        }
+    }
+
+    //Embody check
+    private void EmbodyE()
+    {
+        if (Time.timeScale > 0)
+        {
+            Embody();
+        }
+    }
+
+    //Check when a trigger is entered
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (CompareTag("Fish"))
+        {
+            if (other.CompareTag("Water"))
+            {
+                if (audioManager != null)
+                {
+                    audioManager.Play("splash");
+                }
+                inWater = true;
+                capCollider.density = 5.5f;
+            }
+        }
+        else if (CompareTag("Blob"))
+        {
+            if (other.CompareTag("Water"))
+            {
+                //Makes Blob float
+                if (audioManager != null)
+                {
+                    audioManager.Play("splash");
+                }
+                inWater = true;
+                plyAnim.SetBool("inWater", true);
+                capCollider.density = 2;
+                jumpHeight = 35;
+            }
+        }
+        else
+        {
+            if (other.CompareTag("Water"))
+            {
+                plyAnim.SetTrigger("Death");
+            }
+        }
+
+        //If the Trigger is Death, call Death delegate
+        if(other.CompareTag("Death") || other.CompareTag("Skeleton"))
+        {
+            plyAnim.SetTrigger("Death");
+        }
+    }
+
+    //Check for when the player stays in a trigger
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        if (CompareTag("Fish"))
+        {
+            if (other.CompareTag("Water"))
+            {
+                inWater = true;
+                plyAnim.SetBool("inWater", true);
+            }
+        }
+    }
+
+    //Check for when the trigger is exited
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (CompareTag("Fish"))
+        {
+            if (other.CompareTag("Water"))
+            {
+                inWater = false;
+                plyAnim.SetBool("inWater", false);
+                //capCollider.density = cntrlMove.skeloData.density;
+            }
+        }
+        else if (CompareTag("Blob"))
+        {
+            if (other.CompareTag("Water"))
+            {
+                //Blob jumps out of water
+                inWater = false;
+                capCollider.density = cntrlMove.defaultDensity;
+                jumpHeight = cntrlMove.defaultJumpHeight;
+            }
+        }
+    }
+
+    //Kill from menu
+    public void MenuKill()
+    {
+        Debug.Log("Menu Kill called");
+        plyAnim.SetTrigger("Death");
+    }
+
+    public void SetCatOnWall(bool value, Vector2 direction) 
+    { 
+        OnWall = value;
+        catDir = direction;
+    }
+
+    //Checks if the player is on the ground
+    public bool isGrounded()
+    {
+        float dist = 0f;
+        Vector2 origin = new Vector2(capCollider.bounds.center.x, capCollider.bounds.min.y);
+        Vector2 size = new Vector2(capCollider.size.x, 0.05f);
+        RaycastHit2D hit = Physics2D.CapsuleCast(origin, size, CapsuleDirection2D.Horizontal, 0f, Vector2.down, 
+            dist, groundLayerMask);
+
+        //Debug.Log(hit.collider);
+        return hit.collider != null;
+    }
+
+    //Checks if the box is on the ground (Bat)
+    public bool isBoxGrounded(Rigidbody2D rb)
+    {
+        BoxCollider2D[] cols = new BoxCollider2D[2];
+        rb.GetAttachedColliders(cols); //Gets all the colliders attached to a box
+        BoxCollider2D col;
+
+        //Determines which collider is the box collider, versus the trigger collider
+        if (cols[0].isTrigger)
+        {
+            col = cols[1];
+        }
+        else
+        {
+            col = cols[0];
+        }
+
+        float dist = 0.04f;
+        Vector2 size = new Vector2(col.bounds.size.x, dist);
+        RaycastHit2D hit = Physics2D.BoxCast(new Vector2(col.bounds.center.x, col.bounds.min.y - size.y), size, 0f, Vector2.down, 
+            0, groundLayerMask);
+
+        //Debug.Log("hit is " + hit.collider);
+        return hit.collider != null;
+    }
+
+    /* Bat */
+    //Cooldown for jumping in midair
+    IEnumerator FlyCoolDown()
+    {
+        yield return new WaitForSeconds(0.1f);
+        batJump = true;
+    }
+
+    public void DisableMovement()
+    {
+        canMove = false;
+        canJump = false;
+    }
+
+    public void RenableMovement()
+    {
+        canMove = true;
+        canJump = true;
+    }
+
+    public void PlaySoundFromAudioManager(string name)
+    {
+        audioManager.Play(name);
+    }
+
+    //Calls all functions subscribed to death; Used in Death animation
+    void TriggerDeath()
+    {
+        Death();
+        //this.gameObject.SetActive(false);
+        plySprite.enabled = false;
+    }
+
+    void FreezePlayer()
+    {
+        rb.simulated = false;
+        rb.velocity = Vector2.zero;
+        DisableMovement();
+    }
+
+    void UnFreezePlayer()
+    {
+        rb.simulated = true;
+        RenableMovement();
+    }
+
+    //Used for bug testing
+    private void OnDrawGizmos()
+    {
+        float dist = 0f;
+        RaycastHit2D hit = Physics2D.CapsuleCast(capCollider.bounds.center, capCollider.size, capCollider.direction, 0f, Vector2.down,
+            dist, groundLayerMask);
+
+        Gizmos.DrawLine(hit.centroid + new Vector2(capCollider.bounds.extents.x, 0), 
+            hit.centroid - new Vector2(capCollider.bounds.extents.x, 0));
+        Gizmos.DrawLine(hit.centroid + new Vector2(0, capCollider.bounds.extents.y), 
+            hit.centroid - new Vector2(0, capCollider.bounds.extents.y));
+
+    }
+}
+
+                            </code>
+                        </pre>
                     </div>
                   </div>
                 </div>
@@ -134,9 +822,269 @@
                   </h2>
                   <div id="collapseCM" class="accordion-collapse collapse" aria-labelledby="controlMovement" data-bs-parent="#OldPlayerScripts">
                     <div class="accordion-body bg-black">
-                        <code class="text-primary">
-                            Code Goes Here
-                        </code>
+                        <pre>
+                            <code class="text-primary">
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Tilemaps;
+using System;
+
+
+ struct ColliderInfo
+{
+    public Vector2 size;
+    public Vector2 offset;
+    public CapsuleDirection2D direction;
+}
+
+public class ControlMovement : MonoBehaviour
+{
+    //Started on 8/27 by Jason
+    //Initial code finished on 8/30 by Jason
+    /*
+     * TODO:
+     * Change models with the change
+     */
+    //Assets and Public Variables
+    public Transform heldSkeleton;
+    public PlyController plyCntrl;
+    public PlayerData playerData;
+    public SpecialInteractions spIntr;
+    public SkeletonTrigger skeleton;
+    public static bool canEmbody = true;
+    public static bool canDisembody = false;
+
+    //Private variables
+    AudioManager audioManager;
+
+    [SerializeField]
+    EmbodyField emField;
+
+    [HideInInspector]
+    public SkeletonTrigger skeloData;
+
+    //Default Values for the blob
+    [HideInInspector]
+    public string defaultName = "Blob";
+    [HideInInspector]
+    public float defaultSpeed = 5;
+    [HideInInspector]
+    public float defaultJumpHeight = 18.1f;
+    [HideInInspector]
+    public Vector2 defaultSize = new Vector2(1.830f, 1.366f);
+    [HideInInspector]
+    public Vector2 defaultOffset = new Vector2(0, 0);
+    [HideInInspector]
+    public CapsuleDirection2D defaultDirection = CapsuleDirection2D.Horizontal;
+    [HideInInspector]
+    public float defaultDensity = 1;
+    [SerializeField]
+    public RuntimeAnimatorController defaultController;
+
+    //Enable on enable and disable on disable
+    private void OnEnable()
+    {
+        PlyController.Embody += Embody;
+    }
+
+    private void OnDisable()
+    {
+        PlyController.Embody -= Embody;
+        PlyController.Embody -= Disembody;
+    }
+
+    private void Start()
+    {
+        audioManager = GameObject.FindObjectOfType<AudioManager>();
+    }
+
+    private void Awake()
+    {
+        //Embody(this.tag);
+    }
+    
+    //When "r" is pressed, the player embodies the skeleton
+    void Embody()
+    {
+        //If player is not embodying a skeleton, embody the skeleton
+        if(skeleton != null)
+        {
+            if (emField.CheckSpace(transform.position - new Vector3(0, PlayerBrain.PB.plyCol.bounds.extents.y, 0), skeleton) 
+                && canEmbody && plyCntrl.isGrounded())
+            {
+                if (audioManager != null)
+                {
+                    audioManager.Play("embody");
+                }
+
+                //Changes players values to be the skeleton
+                spIntr.PickUpSkeleton(null);
+                /*tag = skeleton.Name;
+                plyCntrl.speed = skeleton.speed;
+                plyCntrl.jumpHeight = skeleton.jumpHeight;
+                PlayerBrain.PB.plyCol.size = skeleton.colliderSize;
+                PlayerBrain.PB.plyCol.offset = skeleton.colliderOffset;
+                PlayerBrain.PB.plyCol.direction = skeleton.direction;
+                PlayerBrain.PB.plyCol.density = skeleton.density;*/
+                skeloData = skeleton;
+
+                //Changes players sprite to be the skeleton
+                /*if(skeleton.controller != null)
+                    PlayerBrain.PB.plyAnim.runtimeAnimatorController = skeleton.controller;
+                PlayerBrain.PB.plyAnim.SetTrigger(skeleton.Name);
+                PlayerBrain.PB.plyAnim.SetInteger("Form", skeleton.Form);*/
+
+                //Attach skeleton to player and disable it
+                heldSkeleton = skeleton.transform.parent;
+                heldSkeleton.parent = transform;
+                heldSkeleton.gameObject.SetActive(false);
+
+                //Unsubscribes embody funciton and subscribes disembody funciton
+                PlyController.Embody -= Embody;
+                PlyController.Embody += Disembody;
+                canDisembody = true;
+            }
+            else if(!emField.CheckSpace(transform.position - new Vector3(0, PlayerBrain.PB.plyCol.bounds.extents.y, 0), skeleton))
+            {
+                Debug.Log("There is not enough space");
+            }
+            else if(!canEmbody)
+            {
+                Debug.Log("Cannot Embody for some reason");
+            }
+        }
+        else
+        {
+            Debug.Log("There is no skeleton");
+        }
+    }
+    //Disembodies the player
+    void Disembody()
+    {
+        if (heldSkeleton != null)
+        {
+            if (!plyCntrl.InWater && !spIntr.objectHeld && canDisembody && plyCntrl.isGrounded())
+            {
+                if (audioManager != null)
+                {
+                    audioManager.Play("embody");
+                }
+
+                //Changes players values to be the blob
+                tag = defaultName;
+                plyCntrl.speed = defaultSpeed;
+                plyCntrl.jumpHeight = defaultJumpHeight;
+                PlayerBrain.PB.plyCol.size = defaultSize;
+                PlayerBrain.PB.plyCol.offset = defaultOffset;
+                PlayerBrain.PB.plyCol.direction = defaultDirection;
+                PlayerBrain.PB.plyCol.density = defaultDensity;
+                skeleton = null;
+                skeloData = null;
+
+                //Changes players sprite to be the blob
+                //animPly.runtimeAnimatorController = defaultController;
+                PlayerBrain.PB.plyAnim.SetTrigger("Disembody");
+                PlayerBrain.PB.plyAnim.SetInteger("Form", 0);
+
+                //Renables skeleton
+                heldSkeleton.gameObject.SetActive(true);
+                heldSkeleton.parent = null;
+                spIntr.PickUpSkeleton(heldSkeleton.GetComponentInChildren<SkeletonTrigger>());
+                skeleton = heldSkeleton.GetComponentInChildren<SkeletonTrigger>();
+                heldSkeleton = null;
+
+                //Unsubscribes disembody funciton and subscribes embody funciton
+                PlyController.Embody -= Disembody;
+                PlyController.Embody += Embody;
+                canEmbody = true;
+            }
+            else if(plyCntrl.InWater)
+            {
+                Debug.Log("Cannot disembody in water");
+            }
+            else if(spIntr.objectHeld)
+            {
+                Debug.Log("Cannot disembody while carrying an object");
+            }
+        }
+        else
+        {
+            Debug.Log("Held skeleton is null");
+        }
+    }
+
+    //Used For ShriekerField script to remove skeleton from player
+    public void DestorySkeleton()
+    {
+        if (audioManager != null && heldSkeleton != null)
+        {
+            audioManager.Play("embody");
+        }
+
+        //Makes it so player is no longer holding the skeleton
+        spIntr.PickUpSkeleton(null);
+
+        //Changes players values to be the blob
+        tag = "Blob";
+        plyCntrl.speed = 5;
+        plyCntrl.jumpHeight = 18.1f;
+        PlayerBrain.PB.plyCol.size = new Vector2(1.830f, 1.366f);
+        PlayerBrain.PB.plyCol.offset = new Vector2(0, 0);
+        PlayerBrain.PB.plyCol.direction = CapsuleDirection2D.Horizontal;
+        PlayerBrain.PB.plyCol.density = 1;
+
+        //Changes players sprite to be the blob
+        PlayerBrain.PB.plyAnim.SetTrigger("Blob");
+        PlayerBrain.PB.plyAnim.SetInteger("Form", 0);
+
+        //Move skeleton back to respawn position
+        if (skeleton != null)
+        skeleton.skeloScript.RespawnSkeleton();
+        skeleton = null;
+
+        //Activates skeleton and finishes disconnecting it from the player
+        if (heldSkeleton != null)
+        {
+            heldSkeleton.parent = null;
+            heldSkeleton.gameObject.SetActive(true);
+            heldSkeleton = null;
+        }
+
+        //Unsubscribes disembody funciton and subscribes embody funciton
+        PlyController.Embody -= Disembody;
+        PlyController.Embody += Embody;
+        canEmbody = true;
+    }
+
+    //Set values of next skeleton to new values
+    public void SetEmbodyValues(SkeletonTrigger skelo)
+    {
+        skeleton = skelo;
+    }
+
+    void ChangeForm(ColliderInfo from, ColliderInfo to)
+    {
+
+    }
+
+    private void OnDrawGizmos()
+    {
+        //Area Player occupies in Grid
+        Vector3Int topLeft = Vector3Int.FloorToInt(new Vector3(PlayerBrain.PB.plyCol.bounds.min.x, PlayerBrain.PB.plyCol.bounds.max.y+1, 0));
+        Vector3Int topRight = Vector3Int.FloorToInt(PlayerBrain.PB.plyCol.bounds.max + new Vector3(1, 1, 0));
+        Vector3Int botRight = Vector3Int.FloorToInt(new Vector3 (PlayerBrain.PB.plyCol.bounds.max.x+1, PlayerBrain.PB.plyCol.bounds.min.y, 0));
+        Vector3Int botLeft = Vector3Int.FloorToInt(PlayerBrain.PB.plyCol.bounds.min);
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(topRight, botRight);
+        Gizmos.DrawLine(botRight, botLeft);
+        Gizmos.DrawLine(botLeft, topLeft);
+        Gizmos.DrawLine(topLeft, topRight);
+    }
+}
+                            </code>
+                        </pre>
                     </div>
                   </div>
                 </div>
@@ -148,14 +1096,700 @@
                     </h2>
                     <div id="collapseSI" class="accordion-collapse collapse" aria-labelledby="specialInteractions" data-bs-parent="#OldPlayerScripts">
                         <div class="accordion-body bg-black">
-                            <code class="text-primary">
-                                Code Goes Here
-                            </code>
+                            <pre>
+                                <code class="text-primary">
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using System;
+
+public class SpecialInteractions : MonoBehaviour
+{
+    //Fish Tail spin Interaction done by Benathen 9/7
+    //Initial code started by Jason on 9/1
+    //Picking up and dropping boxes done on by Jason 9/2
+    /*
+     * TODO:
+     * 
+     */
+
+        //IMPORTANT: For any successfully executed special action set a cooldown time, unset special ready, and call the cooldown timer!!!
+
+    //Public variables and assets
+    public PlyController plyCntrl;
+    public Rigidbody2D plyRb;
+    public Rigidbody2D heldBox;
+    public SkeletonTrigger heldSkel;
+    public Collider2D plyCol;
+    public GameObject attackBox;
+    public GameObject lamp;
+    public GameObject note;
+    public SpringJoint2D spring;
+    public static Action Climb = delegate { };
+    public static Action Scratch = delegate { };
+    public LineRenderer lineRender;
+    public bool isAttached;
+    public bool objectHeld;
+    public bool skelHeld;
+    public bool HboxHeld;
+    [SerializeField]
+    GameObject IndicatorPrefab;
+
+    public GameObject prefabInstance;
+
+    //Private variables
+    private bool specialReady = true;
+    private float cooldownTime;
+    [HideInInspector]
+    public Rigidbody2D box;
+    [HideInInspector]
+    public SkeletonTrigger skeleton;
+    
+    public Switch lever;
+    string boxTag;
+    AudioManager audioManager;
+
+    [SerializeField]
+    Transform HheldPos;
+    [SerializeField]
+    Transform BheldPos;
+    [SerializeField]
+    Transform skelHeldPos;
+
+    [SerializeField]
+    FixedJoint2D fixedJ;
+    [SerializeField]
+    Animator plyAnim;
+    [SerializeField]
+    ControlMovement cntrlMovement;
+
+    //Enable on enable and disable on disable
+    private void OnEnable()
+    {
+        PlyController.Special += WaterSpecial;
+        PlyController.Special += LandSpecial;
+        PlyController.Special += AirSpecial;
+    }
+
+    private void OnDisable()
+    {
+        PlyController.Special -= WaterSpecial;
+        PlyController.Special -= LandSpecial;
+        PlyController.Special -= AirSpecial;
+    }
+
+    private void Start()
+    {
+        audioManager = GameObject.FindObjectOfType<AudioManager>();
+
+        spring.enabled = false;
+        fixedJ.enabled = false;
+
+        lineRender.positionCount = 2;
+        lineRender.SetPosition(0, transform.position);//Starting Position of Tendril Line
+        lineRender.SetPosition(1, transform.position);//Ending Position of Tendril Line
+        lineRender.enabled = false;
+    }
+
+    private void FixedUpdate()
+    {
+        lineRender.SetPosition(0, transform.position);
+        if (!isAttached)
+        {
+            lineRender.SetPosition(1, transform.position);
+        }
+        else
+        {
+            //Gets the vector that starts from the lamp position and goes to the player position
+            Vector2 targetDir = transform.position - lamp.transform.position;
+            //Gets the angle of the player again, except returns negative angle when the player is to the right of the swing
+            float signedAngle = Vector2.SignedAngle(targetDir, Vector2.down);
+            //Changes the player's rotation to be relative to the swing
+            Quaternion rotation = Quaternion.Euler(0, 0, -signedAngle);
+            this.transform.rotation = rotation;
+        }
+
+        if(objectHeld && heldBox != null)
+        {
+            if (tag == "Human")// tag is tag of this gameobject
+            {
+                heldBox.transform.position = HheldPos.transform.position;
+            }
+            else if (tag == "Bat")// tag is tag of this gameobject
+            {
+                heldBox.transform.position = BheldPos.transform.position;
+            }
+        }
+        if(skelHeld)
+        {
+            if(tag == "Blob")// tag is tag of this gameobject
+            {
+                heldSkel.skelGObject.transform.position = skelHeldPos.transform.position;
+            }
+        }
+    }
+
+    //Special for fish is going to be written by Benathen
+    private void WaterSpecial()
+    {
+        if (tag == "Fish")
+        {
+            if (specialReady)
+            {
+                if(plyCntrl.InWater)
+                plyAnim.SetTrigger("Spin");
+
+                if (lever != null)
+                {
+                    //Activate the lever
+                    lever.Interact();
+                    //Cooldown
+                    cooldownTime = 1;
+                    specialReady = false;
+                    StartCoroutine(SpecialCoolDown());
+                }
+            }
+        }
+    }
+
+    //Sets lever value
+    public void SetLever(Switch l)
+    {
+        lever = l;
+    }
+
+    //Special for blob is tendril grab and swing
+    //Special for cat is climb or cat scratch
+    //Special for human is to pick up boxes up to medium weight
+    private void LandSpecial()
+    {
+        if (specialReady)
+        {
+            switch (tag) //Tag of gameobject
+            {
+                case "Blob":
+                    //Pick up Skeleton
+                    if (skeleton != null && !isAttached && !skelHeld)
+                    {
+                        if (!CheckSpaceForSkelo())
+                        {
+                            if (!plyCntrl.Left && !plyCntrl.Right)
+                            {
+                                plyAnim.SetBool("isGrabbing", true);
+                            }
+                            else
+                            {
+                                PickUpSkeleton(skeleton);
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogError("There is not enough space for skeleton");
+                        }
+                    }
+                    //Tentacle swing
+                    else if (lamp != null && !skelHeld)
+                    {
+                        ShootTendril();
+                    }
+                    //Drop skeleton
+                    else if(skelHeld)
+                    {
+                        if (!plyCntrl.Left && !plyCntrl.Right)
+                        {
+                            plyAnim.SetBool("isGrabbing", false);
+                        }
+                        else
+                        {
+                            PickUpSkeleton(null);
+                        }
+                    }
+
+                    break;
+                case "Human":
+                    //Check if there is a box to hold or a box being held
+                    if (box != null && !objectHeld)
+                    {
+                        if (boxTag == "LBox" || boxTag == "MBox")
+                        {
+                            if (!CheckSpaceForBox(box))
+                            {
+                                if (!plyCntrl.Left && !plyCntrl.Right)
+                                {
+                                    plyAnim.SetBool("isGrabbing", true);
+                                }
+                                else
+                                {
+                                    PickUpBoxHuman(box);
+                                }
+                            }
+                            else
+                            {
+                                Debug.LogError("Not Enough space for box");
+                            }
+                        }
+                        else if(boxTag == "HBox")
+                        {
+                            if (audioManager != null)
+                            {
+                                audioManager.Play("boxGrab");
+                            }
+                            plyAnim.SetBool("isPushing", true);
+                            
+                            //Attach Box
+                            HboxHeld = true;
+                            fixedJ.enabled = true;
+                            fixedJ.connectedBody = box;
+                            fixedJ.connectedBody.mass = 6;
+                            plyCntrl.speed = 3;
+
+                            //Cooldown
+                            cooldownTime = 1;
+                            specialReady = false;
+                            StartCoroutine("SpecialCoolDown");
+                        }
+                    }
+                    else if (objectHeld || HboxHeld)
+                    {
+                        if (!plyCntrl.Left && !plyCntrl.Right)
+                        {
+                            plyAnim.SetBool("isGrabbing", false);
+                            PickUpBoxHuman(null);
+                        }
+                        else
+                        {
+                            PickUpBoxHuman(null);
+                        }
+
+                        if (HboxHeld)
+                        {
+                            PickUpBoxHuman(null);
+                        }
+                    }
+                    break;
+                case "Cat":
+                    //Spawn hitbox
+                    Scratch();
+                    //Cooldown
+                    cooldownTime = 1;
+                    specialReady = false;
+                    StartCoroutine("SpecialCoolDown");
+                    break;
+            }
+        }
+    }
+
+    //Special for bat is to pick up very light boxes
+    private void AirSpecial()
+    {
+        if (tag == "Bat")
+        {
+            if (specialReady)
+            {
+                //Attach box
+                if (box != null && !objectHeld)
+                {
+                    if (boxTag == "LBox")
+                    {
+                        if (!plyCntrl.Left && !plyCntrl.Right)
+                        {
+                            plyAnim.SetBool("isGrabbing", true);
+                        }
+                        else
+                        {
+                            PickUpBoxBat(box);
+                        }
+                    }
+                }
+                else if (objectHeld)
+                {
+                    plyAnim.SetBool("isGrabbing", false);
+                    PickUpBoxBat(null);
+                }
+            }
+        }
+    }
+
+    void AllAnimationClips()
+    {
+        int i = 0;
+        int clipIndex = 0;
+        Debug.Log("Inside all animation clips");
+        foreach(AnimationClip clip in plyAnim.runtimeAnimatorController.animationClips)
+        {
+            if(clip.name == "BlobPickup")
+            {
+                clipIndex = i;
+                Debug.Log("Clip index is " + clipIndex);
+            }
+            i++;
+        }
+    }
+
+    //Check for boxes
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        //Check if it is a switch
+        if(other.CompareTag("Lever"))
+        {
+            lever = other.GetComponent<Switch>();
+        }
+    }
+    //Sets the value of the lamp
+    public void SetSwingerGameObject(GameObject value) 
+    { 
+        lamp = value;
+        if (prefabInstance == null)
+        {
+            prefabInstance = Instantiate(IndicatorPrefab, lamp.transform);
+        }
+        else if (value == null)
+        {
+            Destroy(prefabInstance);
+        }
+        else if (prefabInstance != null)
+        {
+            Destroy(prefabInstance);
+            prefabInstance = Instantiate(IndicatorPrefab, lamp.transform);
+        }
+    }
+
+    //Sets the value of the held box
+    public void SetHeldBox(Rigidbody2D rb, string inputTag) 
+    { 
+        box = rb;
+        boxTag = inputTag;
+        if (prefabInstance == null)
+        {
+            prefabInstance = Instantiate(IndicatorPrefab, box.transform);
+        }
+        else if (rb == null)
+        {
+            Destroy(prefabInstance);
+        }
+        else if (prefabInstance != null)
+        {
+            Destroy(prefabInstance);
+            prefabInstance = Instantiate(IndicatorPrefab, box.transform);
+        }
+    }
+
+    //Sets the value of the skeleton to be held
+    public void SetHeldSkel(SkeletonTrigger skel)
+    {
+        skeleton = skel;
+        if (prefabInstance == null)
+        {
+            prefabInstance = Instantiate(IndicatorPrefab, skeleton.transform);
+        }
+        else if (skel == null)
+        {
+            Destroy(prefabInstance);
+        }
+        else if (prefabInstance != null)
+        {
+            Destroy(prefabInstance);
+            prefabInstance = Instantiate(IndicatorPrefab, skeleton.transform);
+        }
+    }
+
+    //Remove boxes from selection
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if(other.CompareTag("Lever"))
+        {
+            lever = null;
+        }
+    }
+
+    //Special cooldown
+    IEnumerator SpecialCoolDown()
+    {
+        yield return new WaitForSeconds(cooldownTime);
+        specialReady = true;
+    }
+
+    //Checks to see if there is enough space for the box, so that it does not get put through a wall
+    bool CheckSpaceForBox(Rigidbody2D rb)
+    {
+        BoxCollider2D[] cols = new BoxCollider2D[2];
+        rb.GetAttachedColliders(cols); //Gets all the colliders attached to a box
+        BoxCollider2D col;
+
+        //Determines which collider is the box collider, versus the trigger collider
+        if(cols[0].isTrigger)
+        {
+            col = cols[1];
+        }
+        else
+        {
+            col = cols[0];
+        }
+
+        float dist = 0;
+        int layer = LayerMask.NameToLayer("CheckSpace");
+        //Casts a box (much like raycast) into the scene
+        RaycastHit2D hit = Physics2D.BoxCast(HheldPos.position, col.size, 0f, Vector2.down, dist, layer);
+
+        return hit.collider != null; //If collider exists, sends true. Otherwise false
+    }
+
+    //Checks to see if there is enough space for the skeleton, so that it does not get put through a wall
+    bool CheckSpaceForSkelo()
+    {
+        Vector2 start = skelHeldPos.position + Vector3.up; //Pos of skelHeldPos up one
+        float dist = 0.2f;
+
+        string name =  "Jumpables";
+        int layerMask = LayerMask.NameToLayer(name);
+
+        RaycastHit2D hit = Physics2D.Raycast(start, Vector2.down, dist, layerMask);//Sends a ray from start and will only hit colliders in Jumpables layer
+        Debug.DrawRay(start, Vector2.down, Color.red);
+
+        return hit.collider != null; //If collider exists, sends true. Otherwise false
+    }
+
+    //Creates the tentacle between the lamp and the player
+    public void ShootTendril()
+    {
+        //Debug.Log("Spring on " + spring.isActiveAndEnabled);
+        if (audioManager != null)
+        {
+            audioManager.Play("Swing");
+        }
+        if (!spring.isActiveAndEnabled)
+        {
+            lineRender.enabled = true;
+            spring.enabled = true;
+            spring.connectedAnchor = lamp.transform.position;
+            lineRender.SetPosition(1, new Vector3(lamp.transform.position.x, lamp.transform.position.y, transform.position.z));
+            isAttached = true;
+
+            //Cooldown
+            cooldownTime = 0.3f;
+            specialReady = false;
+        }
+        else
+        {
+            plyCntrl.canMove = true;
+            spring.enabled = false;
+            spring.connectedAnchor = Vector2.zero;
+            lineRender.SetPosition(1, transform.position);
+            lineRender.enabled = false;
+            Quaternion rotation = Quaternion.Euler(0, 0, 0);
+            this.transform.rotation = rotation;
+            isAttached = false;
+
+            //Cooldown
+            cooldownTime = 0.5f;
+            specialReady = false;
+        }
+        //init Cooldown
+        StartCoroutine("SpecialCoolDown");
+    }
+
+    //This function is called when we want the blob to pick up skeleton
+    public void PickUpSkeleton(SkeletonTrigger skelo)
+    {
+        if (skelo != null && !skelHeld)
+        {
+            heldSkel = skelo;
+            heldSkel.isGrabbed = true;
+            Destroy(prefabInstance);
+            skelHeld = true;
+            fixedJ.enabled = true;
+            fixedJ.connectedBody = heldSkel.transform.parent.GetComponent<Rigidbody2D>();
+            heldSkel.skelGObject.transform.position = skelHeldPos.transform.position;
+            plyAnim.SetBool("isGrabbing", true);
+            plyCntrl.jumpHeight = 60;
+
+            Debug.Log("Picked up " + skelo.name);
+        }
+        else if(skelo == null && skelHeld)
+        {
+            heldSkel.isGrabbed = false;
+            heldSkel = null;
+            skelHeld = false;
+            fixedJ.enabled = false;
+            fixedJ.connectedBody = null;
+            plyAnim.SetBool("isGrabbing", false);
+            plyCntrl.jumpHeight = 18.1f;
+
+            Debug.Log("Put Down my object");
+        }
+
+        //Cooldown
+        cooldownTime = 1;
+        specialReady = false;
+        StartCoroutine("SpecialCoolDown");
+    }
+
+    public void PickUpBoxHuman(Rigidbody2D box)
+    {
+        if (box != null)
+        {
+            if (audioManager != null)
+            {
+                audioManager.Play("boxGrab");
+            }
+            plyAnim.SetBool("isGrabbing", true);
+            //Attach box
+            heldBox = box;
+            objectHeld = true;
+            fixedJ.enabled = true;
+            fixedJ.connectedBody = heldBox;
+            heldBox.transform.position = HheldPos.transform.position;
+        }
+        else
+        {
+            if (audioManager != null)
+            {
+                audioManager.Play("boxGrab");
+            }
+            plyAnim.SetBool("isPushing", false);
+            plyAnim.SetBool("isGrabbing", false); 
+            objectHeld = false;
+            HboxHeld = false;
+            fixedJ.enabled = false;
+            if(boxTag == "HBox")
+                fixedJ.connectedBody.mass = 20;
+            //plyCntrl.speed = cntrlMovement.skeloData.speed;
+            fixedJ.connectedBody = null;
+            heldBox = null;
+        }
+
+        //Cooldown
+        cooldownTime = 1;
+        specialReady = false;
+        StartCoroutine("SpecialCoolDown");
+    }
+
+    public void PickUpBoxBat(Rigidbody2D box)
+    {
+        if (box != null)
+        {
+            if (audioManager != null)
+            {
+                audioManager.Play("boxGrab");
+            }
+            plyAnim.SetBool("isGrabbing", true);
+            //Attach box
+            heldBox = box;
+            objectHeld = true;
+            fixedJ.enabled = true;
+            fixedJ.connectedBody = heldBox;
+            heldBox.transform.position = BheldPos.transform.position;
+        }
+        else
+        {
+            if (audioManager != null)
+            {
+                audioManager.Play("boxGrab");
+            }
+            plyAnim.SetBool("isGrabbing", false);
+            //plyAnim.SetTrigger("Bat");
+            objectHeld = false;
+            fixedJ.enabled = false;
+            fixedJ.connectedBody = null;
+            heldBox = null;
+        }
+
+        //Cooldown
+        cooldownTime = 1;
+        specialReady = false;
+        StartCoroutine("SpecialCoolDown");
+    }
+
+    //Used in BlobPickUp Animation to pick up the skeleton on the correct frame
+    public void CallPickUpFromAnimation()
+    {
+        PickUpSkeleton(skeleton);
+    }
+
+    //Used in BlobPutDown Animation to put down the skeleton on the correct frame
+    public void CallPutDownFromAnimation()
+    {
+        PickUpSkeleton(null);
+    }
+
+    //Used in BlobPickUp Animation to pick up the skeleton on the correct frame
+    public void CallPickUpBoxFromHumanAnimation()
+    {
+        PickUpBoxHuman(box);
+    }
+
+    //Used in BlobPutDown Animation to put down the skeleton on the correct frame
+    public void CallPutDownBoxFromHumanAnimation()
+    {
+        PickUpBoxHuman(null);
+    }
+
+    //Used in BlobPickUp Animation to pick up the skeleton on the correct frame
+    public void CallPickUpBoxFromBatAnimation()
+    {
+        PickUpBoxBat(box);
+    }
+
+    //Used in BlobPutDown Animation to put down the skeleton on the correct frame
+    public void CallPutDownBoxFromBatAnimation()
+    {
+        PickUpBoxBat(null);
+    }
+
+    private void OnDrawGizmos()
+    {
+        //Human Box Pos
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(HheldPos.position, 0.3f);
+
+        //Bat Box Pos
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(BheldPos.position, 0.3f);
+
+        //Blob Box Pos
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(skelHeldPos.position, 0.3f);
+    }
+
+    private void Interact()
+    {
+        Debug.Log("Interact called");
+
+        //Check if there is a note to interact with
+        if(note != null)
+        {
+            Debug.Log(note);
+            Debug.Log(note.active);
+            if (!note.active)
+            {
+                note.SetActive(true);
+                Time.timeScale = 0;
+            }
+            else
+            {
+                note.SetActive(false);
+                Time.timeScale = 1;
+            }
+        }
+    }
+
+    /*
+     * Indexes of Animations:
+     * Grab animation: 22
+     */
+}
+
+                                </code>
+                            </pre>
                         </div>
                     </div>
                 </div>
             </div>
-        <br><br>
+        <br>
+        <p>
+            After using these scripts for some time I started realize they could be better. It was very difficult to add features due to the fact we had a very if tree, where if we didn't pay attention we may affect something else. Also, the main script PlyController was becoming very bloated and huge. So, I thought it would be a good idea to spilt it up into multiple scripts, one for each form. That way it would be easier to find issues due to them being more localized and make changing and adding features for each form easier. Also, it would prevent the other scripts from causing problems for each other. I also made a script that holds a bunch of commonly used values, which would help reduce the list of variables in each script.
+            <br><br>
+            In this new verison, <strong>Controller.cs</strong> is an abstract class that the other 5 controllers inherit from. The purpose for this was to put all code that every controller would need in one spot. This way I didn't have to write the same code 5 different times and any code that was unique was put in its respective controller. Than there is <strong>PlayerBrain.sc</strong> which was created as a way to cut down on the number of variables in each script and make it so all the most commonly used values would in one place. That way each script could grab what they needed. I originally thought should put these variables in <strong>Controller.cs</strong> but I realized that if I were to do that, it would increase the number variables in each controller script by about 7. Which would make it quite an annoying thing to set up. Finally we have <strong>Embodiment.cs</strong>, this controls the embodying ability. Not too much has changed fundamentally, it just prepared for more edge cases and configured to work with the new set up of scripts.
         <!-- After Player Refactor -->
         <h4>New Code</h4>
         <div class="accordion" id="NewPlayerScripts">
@@ -167,9 +1801,355 @@
                 </h2>
                 <div id="cont" class="accordion-collapse collapse" aria-labelledby="controller" data-bs-parent="#NewPlayerScripts">
                     <div class="accordion-body bg-black">
-                        <code class="text-primary">
-                            Code Goes Here
-                        </code>
+                        <pre>
+                            <code class="text-primary">
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+/// <summary>
+/// Base class for all player controllers
+/// </summary>
+public class Controller : MonoBehaviour
+{
+    /*  Things to Note:
+     *  When we want to change the player to a form, makes sure to:
+     *      Step 1: Disable the current controller from Player brain
+     *      Step 2: Enable the controller of the target from
+     *      
+     *  The Enabling of a controller will set the values of the collider, set itself as the current controller, and everything else
+     *  that need to be set for that particular form
+     */
+
+
+    //Public Variables
+    [Header("Form Settings")]
+    public string form;
+    public float speed;
+    public float jumpHeight;
+    public float density = 1;
+    public Vector2 colliderSize;
+    public Vector2 colliderOffset;
+    public CapsuleDirection2D direction;
+    public RuntimeAnimatorController animatorController;
+    public GameObject note;
+
+    //Protected Variables
+    protected PlayerControls PlyCtrl;
+    protected AudioManager audioManager;
+    protected bool right;
+    protected bool left;
+    protected bool specialReady = true;
+    protected float cooldownTime;
+
+    /*public Animator anim;
+    private int parametrA;
+    public string nameOfTheParameter;
+    private AnimatorStateInfo cInfo;*/
+
+    //Private
+    public bool Right
+    { get { return right; } }
+    public bool Left
+    { get { return left; } }
+
+    protected bool hasRun = true;
+
+    protected virtual void Awake()
+    {
+        /*cInfo = anim.GetCurrentAnimatorStateInfo(0);
+       
+        parametrA = Animator.StringToHash(nameOfTheParameter);
+
+        anim.SetTrigger(parametrA);*/
+
+
+        PlyCtrl = new PlayerControls();
+        audioManager = FindObjectOfType<AudioManager>();
+        //this.gameObject.transform.position = GameAction.PlaceColOnGround(PlayerBrain.PB.plyCol);\
+        if (this.enabled)
+        {
+            InitializeForm();
+        }
+        TransitionController.slideInAction = UnFreezePlayer;
+    }
+
+    protected virtual void OnEnable()
+    {
+        PlyCtrl.Enable();
+        InitializeForm();
+    }
+
+    //Called during OnEnable to change the form and stats of the player when it changes form
+    protected virtual void InitializeForm()
+    {
+        tag = form;
+        PlayerBrain.PB.currentController = this;
+        PlayerBrain.PB.plyCol.size = colliderSize;
+        PlayerBrain.PB.plyCol.offset = colliderOffset;
+        PlayerBrain.PB.plyCol.direction = direction;
+        PlayerBrain.PB.plyCol.density = density;
+        PlayerBrain.PB.plyAnim.runtimeAnimatorController = animatorController;
+
+        Debug.Log("The form is: " + form);
+    }
+
+    protected virtual void OnDisable()
+    {
+        PlyCtrl.Disable();
+    }
+
+    // Start is called before the first frame update
+    public virtual void Start()
+    {
+        audioManager = GameObject.FindObjectOfType<AudioManager>();
+        //Special Interact
+        PlyCtrl.Player.Special.performed += _ => Special();
+
+        //Regular interact
+        PlyCtrl.Player.Interact.performed += _ => PlayerBrain.Interact();
+
+        //Jump
+        PlyCtrl.Player.Jump.performed += _ => Jump();
+
+        //Embody
+        PlyCtrl.Player.Embody.performed += _ => Embody();
+
+        //Pause
+        PlyCtrl.Player.Pause.performed += _ => PlayerBrain.Pause();
+
+        PlayerBrain.PB.spring.enabled = false;
+        PlayerBrain.PB.fixedJ.enabled = false;
+        PlayerBrain.Interact += OpenNote;
+    }
+
+    // Update is called once per frame
+    public virtual void FixedUpdate()
+    {
+        if(!isGrounded())
+        {
+            ToggleBody(false);
+            hasRun = false;
+        }
+        else
+        {
+            if (!hasRun)
+            {
+                ToggleBody(true);
+                hasRun = true;
+            }
+        }
+
+        //Remove momentum while on ground
+        if (PlyCtrl.Player.Movement.ReadValue<float>() == 0 && isGrounded())
+        {
+            //Reduce the player's speed by half
+            PlayerBrain.PB.rb.velocity *= new Vector2(0.75f, 1);
+        }
+
+        if (PlayerBrain.PB.canMove)
+        {
+            //Keeps track of what direction player is moving in and flips the player based on the direction they are heading in
+            if (PlyCtrl.Player.Movement.ReadValue<float>() > 0 || PlyCtrl.Player.FishInWater.ReadValue<Vector2>().x > 0)
+            {
+                this.gameObject.transform.localScale = new Vector3(-1 * Mathf.Abs(transform.localScale.x),
+                    Mathf.Abs(transform.localScale.y), Mathf.Abs(transform.localScale.z));
+                right = true;
+                left = false;
+            }
+            else if (PlyCtrl.Player.Movement.ReadValue<float>() < 0 || PlyCtrl.Player.FishInWater.ReadValue<Vector2>().x < 0)
+            {
+                this.gameObject.transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x),
+                    Mathf.Abs(transform.localScale.y), Mathf.Abs(transform.localScale.z));
+                left = true;
+                right = false;
+            }
+            else
+            {
+                left = false;
+                right = false;
+            }
+        }
+
+
+        if (PlyCtrl.Player.Movement.ReadValue<float>() != 0 && PlayerBrain.PB.canMove)
+        {
+            PlayerBrain.PB.plyAnim.SetBool("Walking", true);
+        }
+        else
+        {
+            PlayerBrain.PB.plyAnim.SetBool("Walking", false);
+        }
+
+        if (isGrounded())
+        {
+            PlayerBrain.PB.plyAnim.SetBool("isJumping", false);
+        }
+        else
+        {
+            PlayerBrain.PB.plyAnim.SetBool("isJumping", true);
+        }
+    }
+
+    public virtual void OnTriggerEnter2D(Collider2D other)
+    {
+        //If the Trigger is Death, trigger Death
+        if (other.CompareTag("Death") || other.CompareTag("Skeleton"))
+        {
+            PlayerBrain.PB.plyAnim.SetTrigger("Death");
+            SetToDefault();
+        }
+
+        if(other.CompareTag("Shrieker"))
+        {
+            if (this.enabled)
+            {
+                PlayerBrain.PB.Embodiment.ShriekerEvent();
+            }
+        }
+    }
+
+    public virtual void OnTriggerStay2D(Collider2D other)
+    {
+
+    }
+
+    public virtual void OnTriggerExit2D(Collider2D other)
+    {
+
+    }
+
+    /// <summary>
+    /// Used in Player Data to reset all necessary values back to null, false, etc
+    /// </summary>
+    public virtual void SetToDefault()
+    {
+
+    }
+
+    //Use base.Jump at the end of all overrides of Jump
+    public virtual void Jump()
+    {
+        PlayerBrain.PB.plyAnim.SetTrigger("takeOff");
+        PlayerBrain.PB.plyAnim.SetBool("isJumping", true);
+    }
+
+    //Checks if the player is on the ground
+    public bool isGrounded()
+    {
+        float dist = 0f;
+        int layer = LayerMask.GetMask("Jumpables", "PickupAbles");
+
+        Vector2 origin = new Vector2(PlayerBrain.PB.plyCol.bounds.center.x, PlayerBrain.PB.plyCol.bounds.min.y);
+        Vector2 size = new Vector2(PlayerBrain.PB.plyCol.size.x, 0.05f);
+        RaycastHit2D hit = Physics2D.CapsuleCast(origin, size, CapsuleDirection2D.Horizontal, 0f, Vector2.down,
+            dist, layer);
+
+        //Debug.Log(hit.collider);
+        return hit.collider != null;
+    }
+
+    //Pass in a valid string to play a sound
+    public void PlaySoundFromAudioManager(string list)
+    {
+        string[] names = list.Split();
+        string name = names[UnityEngine.Random.Range(0, names.Length)];
+        audioManager.Play(name);
+    }
+
+    public virtual void Special()
+    {
+
+    }
+
+    public virtual void CallFromAnimation(int value)
+    {
+
+    }
+
+    public virtual void DisableMovement()
+    {
+        PlayerBrain.PB.rb.constraints = RigidbodyConstraints2D.FreezeAll;
+    }
+
+    public virtual void RenableMovement()
+    {
+        PlayerBrain.PB.rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+    }
+
+    //Calls all functions subscribed to death; Used in Death animation
+    void TriggerDeath()
+    {
+        PlayerBrain.Death();
+        PlayerBrain.PB.plySpr.enabled = false;
+    }
+
+    void FreezePlayer()
+    { 
+        PlayerBrain.PB.rb.simulated = false;
+        PlayerBrain.PB.rb.velocity = Vector2.zero;
+        ToggleBody(false);
+        DisableMovement();
+    }
+
+    void UnFreezePlayer()
+    {
+        PlayerBrain.PB.rb.simulated = true;
+        ToggleBody(true);
+        RenableMovement();
+    }
+
+    /// <summary>
+    /// This is to be used to disable and enable Disembody and embody for the correct form. Where blob the can only embody so only canEmbody is disabled
+    /// and with any of the other forms we disable canDisembody.
+    /// Note: Make sure to set it back to true
+    /// </summary>
+    /// <param name="value"></param>
+    public virtual void ToggleBody(bool value)
+    {
+
+    }
+
+    //Used for bug testing
+    private void OnDrawGizmos()
+    {
+
+    }
+
+    private void OpenNote()
+    {
+        //Check if there is a note to interact with
+        if (note != null)
+        {
+            Debug.Log(note);
+            Debug.Log(note.activeSelf);
+            if (!note.activeSelf)
+            {
+                note.SetActive(true);
+                Time.timeScale = 0;
+            }
+            else
+            {
+                note.SetActive(false);
+                Time.timeScale = 1;
+            }
+        }
+    }
+
+    //Checks for embodiment and causes it
+    public void Embody()
+    {
+        if (!PlayerBrain.PB.inWater)
+        {
+            PlayerBrain.Embody();
+        }
+    }
+}
+
+                            </code>
+                        </pre>
                     </div>
                 </div>
             </div>
@@ -181,9 +2161,424 @@
                 </h2>
                 <div id="blobCont" class="accordion-collapse collapse" aria-labelledby="blobController" data-bs-parent="#NewPlayerScripts">
                     <div class="accordion-body bg-black">
-                        <code class="text-primary">
-                            Code Goes Here
-                        </code>
+                        <pre>
+                            <code class="text-primary">
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class BlobController : Controller
+{
+    [Header("Blob Settings")]
+    public bool isAttached;
+    public bool skelHeld;
+    public LineRenderer lRenderer;
+    public GameObject lamp;
+    public SkeletonTrigger heldSkel;
+    public SkeletonTrigger targetSkeleton;
+    public Transform skelHeldPos;
+
+    public override void Start()
+    {
+        base.Start();
+
+        lRenderer.positionCount = 2;
+        lRenderer.SetPosition(0, transform.position);//Starting Position of Tendril Line
+        lRenderer.SetPosition(1, transform.position);//Ending Position of Tendril Line
+        lRenderer.enabled = false;
+    }
+
+    // Update is called once per frame
+    public override void FixedUpdate()
+    {
+        base.FixedUpdate();
+
+        if (skelHeld)
+        {
+            heldSkel.skelGObject.transform.position = skelHeldPos.transform.position;
+        }
+
+        if(isAttached)
+        {
+            Embodiment.canEmbody = false;
+            hasRun = false;
+        }
+        else
+        {
+            if (!hasRun)
+            {
+                Embodiment.canEmbody = true;
+                hasRun = true;
+            }
+        }
+
+        if (PlayerBrain.PB.canMove)
+        {
+            lRenderer.SetPosition(0, transform.position);
+            if (!isAttached)
+            {
+                lRenderer.SetPosition(1, transform.position);
+            }
+            else
+            {
+                //Gets the vector that starts from the lamp position and goes to the player position
+                Vector2 targetDir = transform.position - lamp.transform.position;
+                //Gets the angle of the player again, except returns negative angle when the player is to the right of the swing
+                float signedAngle = Vector2.SignedAngle(targetDir, Vector2.down);
+                //Changes the player's rotation to be relative to the swing
+                Quaternion rotation = Quaternion.Euler(0, 0, -signedAngle);
+                this.transform.rotation = rotation;
+            }
+
+            if (PlyCtrl.Player.Movement.ReadValue<float>() != 0)
+            {
+                //Movement
+                if (Mathf.Abs(PlayerBrain.PB.rb.velocity.x) < speed && !isAttached)
+                {
+                    PlayerBrain.PB.rb.AddForce(Vector2.right * PlyCtrl.Player.Movement.ReadValue<float>() * 20 * PlayerBrain.PB.rb.mass);
+                }
+                else if (isAttached)
+                {
+                    if (PlyCtrl.Player.Movement.ReadValue<float>() != 0)
+                    {
+                        //PlayerBrain.PB.rb.AddForce(Vector2.right * PlyCtrl.Player.Movement.ReadValue<float>() * 0.2f, ForceMode2D.Impulse);
+                        PlayerBrain.PB.rb.AddRelativeForce(Vector2.right * PlyCtrl.Player.Movement.ReadValue<float>() * 0.15f, ForceMode2D.Impulse);
+                    }
+                }
+            }
+
+            if (!isGrounded())
+            {
+                if (audioManager != null)
+                {
+                    audioManager.Stop("blobStep");
+                }
+            }
+
+            #region Animation Block
+            //Check if the blob is attached
+            if (isAttached)
+            {
+                PlayerBrain.PB.plyAnim.SetBool("Swing", true);
+            }
+            else
+            {
+                PlayerBrain.PB.plyAnim.SetBool("Swing", false);
+            }
+            #endregion
+        }
+    }
+
+    public override void SetToDefault()
+    {
+        lamp = null;
+        PlayerBrain.PB.spring.enabled = false;
+        PlayerBrain.PB.spring.connectedAnchor = Vector2.zero;
+        lRenderer.SetPosition(1, transform.position);
+        lRenderer.enabled = false;
+        Quaternion rotation = Quaternion.Euler(0, 0, 0);
+        this.transform.rotation = rotation;
+        isAttached = false;
+
+        targetSkeleton = null;
+        if (heldSkel != null)
+        {
+            heldSkel.isGrabbed = false;
+            heldSkel.skeloScript.RespawnSkeleton();
+            heldSkel = null;
+        }
+        skelHeld = false;
+        PlayerBrain.PB.fixedJ.enabled = false;
+        PlayerBrain.PB.fixedJ.connectedBody = null;
+        jumpHeight = 18.1f;
+
+        PlayerBrain.PB.plyAnim.SetBool("isGrabbing", false);
+        PlayerBrain.PB.plyAnim.SetTrigger(form);
+    }
+
+    public override void Jump()
+    {
+        if(PlayerBrain.PB.canJump)
+        {
+            if (isGrounded() || PlayerBrain.PB.inWater)
+            {
+                PlayerBrain.PB.rb.AddForce((Vector2.up * jumpHeight), ForceMode2D.Impulse);
+            }
+            else if (isAttached)
+            {
+                ShootTendril();
+                PlayerBrain.PB.rb.AddForce(PlayerBrain.PB.rb.velocity.normalized * 5, ForceMode2D.Impulse);
+            }
+
+            base.Jump();// this goes last in function
+        }
+    }
+
+    public override void Special()
+    {
+        //Pick up Skeleton
+        if (targetSkeleton != null && !isAttached && !skelHeld)
+        {
+            if (!CheckSpaceForSkelo())
+            {
+                if (!Left && !Right)
+                {
+                    PlayerBrain.PB.plyAnim.SetBool("isGrabbing", true);
+                }
+                else
+                {
+                    PickUpSkeleton(targetSkeleton);
+                }
+            }
+            else
+            {
+                Debug.LogError("There is not enough space for skeleton");
+            }
+        }
+        //Tentacle swing
+        else if (lamp != null && !skelHeld)
+        {
+            ShootTendril();
+        }
+        //Drop skeleton
+        else if (skelHeld)
+        {
+            if (!Left && !Right)
+            {
+                PlayerBrain.PB.plyAnim.SetBool("isGrabbing", false);
+            }
+            else
+            {
+                PickUpSkeleton(null);
+            }
+        }
+    }
+
+    //Checks to see if there is enough space for the skeleton, so that it does not get put through a wall
+    bool CheckSpaceForSkelo()
+    {
+        Vector2 start = skelHeldPos.position + Vector3.up; //Pos of skelHeldPos up one
+        float dist = 0.2f;
+
+        string name = "CheckSpace";
+        int layerMask = LayerMask.NameToLayer(name);
+
+        RaycastHit2D hit = Physics2D.Raycast(start, Vector2.down, dist, layerMask);//Sends a ray from start and will only hit colliders in Jumpables layer
+        Debug.DrawRay(start, Vector2.down, Color.red);
+
+        return hit.collider != null; //If collider exists, sends true. Otherwise false
+    }
+
+    //Creates the tentacle between the lamp and the player
+    public void ShootTendril()
+    {
+        //Debug.Log("Spring on " + spring.isActiveAndEnabled);
+        if (audioManager != null)
+        {
+            audioManager.Play("Swing");
+        }
+        if (!PlayerBrain.PB.spring.isActiveAndEnabled)
+        {
+            lRenderer.enabled = true;
+            PlayerBrain.PB.plyCol.size = new Vector2(0.96f, 0.96f);
+            StartCoroutine(AnimateTentacle(lamp.transform.position));
+            PlayerBrain.PB.spring.enabled = true;
+            PlayerBrain.PB.spring.connectedAnchor = lamp.transform.position;
+            isAttached = true;
+        }
+        else
+        {
+            PlayerBrain.PB.plyCol.size = colliderSize;
+            PlayerBrain.PB.spring.enabled = false;
+            PlayerBrain.PB.spring.connectedAnchor = Vector2.zero;
+            lRenderer.SetPosition(1, transform.position);
+            lRenderer.enabled = false;
+            Quaternion rotation = Quaternion.Euler(0, 0, 0);
+            this.transform.rotation = rotation;
+            isAttached = false;
+        }
+    }
+
+    //Sets the value of the lamp variable to allow the player to swing
+    public void SetSwingerGameObject(GameObject value)
+    {
+        lamp = value;
+        if (PlayerBrain.PB.prefabInstance == null)
+        {
+            PlayerBrain.PB.prefabInstance = Instantiate(PlayerBrain.PB.IndicatorPrefab, lamp.transform);
+        }
+        else if (value == null)
+        {
+            Destroy(PlayerBrain.PB.prefabInstance);
+        }
+        else if (PlayerBrain.PB.prefabInstance != null)
+        {
+            Destroy(PlayerBrain.PB.prefabInstance);
+            PlayerBrain.PB.prefabInstance = Instantiate(PlayerBrain.PB.IndicatorPrefab, lamp.transform);
+        }
+    }
+
+    //This function is called when we want the blob to pick up skeleton
+    public void PickUpSkeleton(SkeletonTrigger skelo)
+    {
+        if (skelo != null && !skelHeld)
+        {
+            heldSkel = skelo;
+            heldSkel.isGrabbed = true;
+            Destroy(PlayerBrain.PB.prefabInstance);
+            skelHeld = true;
+            PlayerBrain.PB.fixedJ.enabled = true;
+            PlayerBrain.PB.fixedJ.connectedBody = heldSkel.transform.parent.GetComponent<Rigidbody2D>();
+            heldSkel.skelGObject.transform.position = skelHeldPos.transform.position;
+            PlayerBrain.PB.plyAnim.SetBool("isGrabbing", true);
+            jumpHeight = 60;
+            ToggleBody(false);
+        }
+        else if (skelo == null && skelHeld)
+        {
+            heldSkel.isGrabbed = false;
+            heldSkel = null;
+            skelHeld = false;
+            PlayerBrain.PB.fixedJ.enabled = false;
+            PlayerBrain.PB.fixedJ.connectedBody = null;
+            PlayerBrain.PB.plyAnim.SetBool("isGrabbing", false);
+            jumpHeight = 18.1f;
+            ToggleBody(false);
+        }
+    }
+
+    //Sets the value of the skeleton to be held
+    public void SetHeldSkel(SkeletonTrigger skel)
+    {
+        targetSkeleton = skel;
+        if (PlayerBrain.PB.prefabInstance == null)
+        {
+            PlayerBrain.PB.prefabInstance = Instantiate(PlayerBrain.PB.IndicatorPrefab, targetSkeleton.transform);
+        }
+        else if (skel == null)
+        {
+            Destroy(PlayerBrain.PB.prefabInstance);
+        }
+        else if (PlayerBrain.PB.prefabInstance != null)
+        {
+            Destroy(PlayerBrain.PB.prefabInstance);
+            PlayerBrain.PB.prefabInstance = Instantiate(PlayerBrain.PB.IndicatorPrefab, targetSkeleton.transform);
+        }
+    }
+
+    public override void CallFromAnimation(int value)
+    {
+        if (PlayerBrain.PB.currentController == this)
+        {
+            if (value == 0)
+            {
+                PickUpSkeleton(targetSkeleton);
+            }
+            else
+            {
+                PickUpSkeleton(null);
+            }
+        }
+    }
+
+
+    //OnTriggers
+    public override void OnTriggerEnter2D(Collider2D other)
+    {
+        base.OnTriggerEnter2D(other);
+        if (PlayerBrain.PB.currentController == this)
+        {
+            if (other.CompareTag("Water"))
+            {
+                //if the player is in the water while carrying a skeleton
+                if(skelHeld)
+                {
+                    PickUpSkeleton(null);
+                }
+
+                //Makes Blob float
+                if (audioManager != null)
+                {
+                    audioManager.Play("splash");
+                }
+                PlayerBrain.PB.inWater = true;
+                PlayerBrain.PB.plyAnim.SetBool("inWater", true);
+                PlayerBrain.PB.plyCol.density = 2;
+                jumpHeight = 35;
+            }
+        }
+    }
+
+    public override void OnTriggerExit2D(Collider2D other)
+    {
+        base.OnTriggerExit2D(other);
+        if (PlayerBrain.PB.currentController == this)
+        {
+            if (other.CompareTag("Water"))
+            {
+                //Blob jumps out of water
+                PlayerBrain.PB.inWater = false;
+                PlayerBrain.PB.plyAnim.SetBool("inWater", false);
+                PlayerBrain.PB.plyCol.density = density;
+                jumpHeight = 18.1f;
+            }
+        }
+    }
+
+    public override void DisableMovement()
+    {
+        base.DisableMovement();
+        if(this.enabled)
+        {
+            ToggleBody(false);
+        }
+    }
+
+    public override void RenableMovement()
+    {
+        base.RenableMovement();
+        if (this.enabled)
+        {
+            ToggleBody(true);
+        }
+    }
+
+    public override void ToggleBody(bool value)
+    {
+        Embodiment.canEmbody = value;
+    }
+
+    IEnumerator AnimateTentacle(Vector3 endPos)
+    {
+        //new Vector3(lamp.transform.position.x, lamp.transform.position.y, transform.position.z)
+        int frames = 12; //Number of frames of the animation    
+        int elapsedFrames = 0; //Don't change
+
+        while (elapsedFrames != frames)
+        {
+            float ratio = (float)elapsedFrames / frames;
+            Vector3 interpolatedPosition = Vector3.Lerp(transform.position, endPos, ratio);
+
+            elapsedFrames = (elapsedFrames + 1) % (frames + 1);
+
+            lRenderer.SetPosition(1, interpolatedPosition);
+            yield return null;
+        }
+
+        lRenderer.SetPosition(1, endPos);
+    }
+
+    private void OnDrawGizmos()
+    {
+        //Blob Box Pos
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(skelHeldPos.position, 0.3f);
+    }
+}
+
+                            </code>
+                        </pre>
                     </div>
                 </div>
             </div>
@@ -195,9 +2590,256 @@
                 </h2>
                 <div id="batCont" class="accordion-collapse collapse" aria-labelledby="batController" data-bs-parent="#NewPlayerScripts">
                     <div class="accordion-body bg-black">
-                        <code class="text-primary">
-                            Code Goes Here
-                        </code>
+                        <pre>
+                            <code class="text-primary">
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class BatController : Controller
+{
+    [Header("Bat Settings")]
+    public Rigidbody2D heldBox;
+    [SerializeField]
+    Transform heldPos;
+    [HideInInspector]
+    public Rigidbody2D box;
+    string boxTag;
+    bool batJump = true;
+    bool boxHeld;
+
+    private bool flap;
+
+    public override void FixedUpdate()
+    {
+        base.FixedUpdate();
+
+        if(boxHeld)
+        {
+            heldBox.transform.position = heldPos.transform.position;
+        }
+
+        if(PlayerBrain.PB.canMove)
+        {
+            //Ground Movement
+            if (Mathf.Abs(PlayerBrain.PB.rb.velocity.x) < speed)
+            {
+                PlayerBrain.PB.rb.AddForce(Vector2.right * PlyCtrl.Player.Movement.ReadValue<float>() * 20 * PlayerBrain.PB.rb.mass);
+            }
+        }
+
+        #region Animation Block
+        //Checking if on ground as bat while carrying box
+        if (boxHeld && tag == "Bat")
+        {
+            if (isBoxGrounded(heldBox))
+            {
+                PlayerBrain.PB.plyAnim.SetBool("isJumping", false);
+            }
+        }
+        #endregion
+    }
+
+    public override void Jump()
+    {
+        if (PlayerBrain.PB.canJump)
+        {
+            //Fly when bat
+            if (batJump)
+            {
+                batJump = false;
+                PlayerBrain.PB.rb.AddForce((Vector2.up * jumpHeight) - new Vector2(0, PlayerBrain.PB.rb.velocity.y), ForceMode2D.Impulse);
+                if (audioManager != null)
+                {
+                    PlayerBrain.PB.plyAnim.SetTrigger("Flap");
+                    audioManager.Play("wingFlap");
+                }
+                StartCoroutine(FlyCoolDown());
+
+                if (flap)
+                {
+                    base.Jump();
+                }
+            }
+        }
+    }
+
+    public override void OnTriggerEnter2D(Collider2D other)
+    {
+        base.OnTriggerEnter2D(other);
+        if (PlayerBrain.PB.currentController == this)
+        {
+            if (other.CompareTag("Water"))
+            {
+                PlayerBrain.PB.plyAnim.SetTrigger("Death");
+            }
+        }
+    }
+
+    public override void Special()
+    {
+        //Attach box
+        if (box != null && !boxHeld)
+        {
+            if (boxTag == "LBox")
+            {
+                if (!Left && !Right)
+                {
+                    PlayerBrain.PB.plyAnim.SetBool("isGrabbing", true);
+                }
+                else
+                {
+                    PickUpBoxBat(box);
+                }
+            }
+        }
+        else if (boxHeld)
+        {
+            PlayerBrain.PB.plyAnim.SetBool("isGrabbing", false);
+            PickUpBoxBat(null);
+        }
+    }
+
+    public override void SetToDefault()
+    {
+        PlayerBrain.PB.plyAnim.SetBool("isGrabbing", false);
+        boxHeld = false;
+        boxTag = null;
+        PlayerBrain.PB.fixedJ.enabled = false;
+        PlayerBrain.PB.fixedJ.connectedBody = null;
+        heldBox = null;
+        box = null;
+    }
+
+    //Checks if the box is on the ground (Bat)
+    public bool isBoxGrounded(Rigidbody2D rb)
+    {
+        BoxCollider2D[] cols = new BoxCollider2D[2];
+        rb.GetAttachedColliders(cols); //Gets all the colliders attached to a box
+        BoxCollider2D col;
+
+        //Determines which collider is the box collider, versus the trigger collider
+        if (cols[0].isTrigger)
+        {
+            col = cols[1];
+        }
+        else
+        {
+            col = cols[0];
+        }
+
+        float dist = 0.04f;
+        int layer = LayerMask.GetMask("Jumpables", "PickupAbles");
+        Vector2 size = new Vector2(col.bounds.size.x, dist);
+        RaycastHit2D hit = Physics2D.BoxCast(new Vector2(col.bounds.center.x, col.bounds.min.y - size.y), size, 0f, Vector2.down,
+            0, layer);
+
+        //Debug.Log("hit is " + hit.collider);
+        return hit.collider != null;
+    }
+
+    public void PickUpBoxBat(Rigidbody2D box)
+    {
+        if (box != null)
+        {
+            if (audioManager != null)
+            {
+                audioManager.Play("boxGrab");
+            }
+            PlayerBrain.PB.plyAnim.SetBool("isGrabbing", true);
+            //Attach box
+            heldBox = box;
+            heldBox.gravityScale = 0;
+            boxHeld = true;
+            PlayerBrain.PB.fixedJ.enabled = true;
+            PlayerBrain.PB.fixedJ.connectedBody = heldBox;
+            heldBox.transform.position = heldPos.transform.position;
+            ToggleBody(false);
+        }
+        else
+        {
+            if (audioManager != null)
+            {
+                audioManager.Play("boxGrab");
+            }
+            PlayerBrain.PB.plyAnim.SetBool("isGrabbing", false);
+            boxHeld = false;
+            heldBox.gravityScale = 1;
+            PlayerBrain.PB.fixedJ.enabled = false;
+            PlayerBrain.PB.fixedJ.connectedBody = null;
+            heldBox = null;
+            ToggleBody(true);
+        }
+    }
+
+    //Sets the value of the held box
+    public void SetHeldBox(Rigidbody2D rb, string inputTag)
+    {
+        box = rb;
+        boxTag = inputTag;
+        if (PlayerBrain.PB.prefabInstance == null)
+        {
+            PlayerBrain.PB.prefabInstance = Instantiate(PlayerBrain.PB.IndicatorPrefab, box.transform);
+        }
+        else if (rb == null)
+        {
+            Destroy(PlayerBrain.PB.prefabInstance);
+        }
+        else if (PlayerBrain.PB.prefabInstance != null)
+        {
+            Destroy(PlayerBrain.PB.prefabInstance);
+            PlayerBrain.PB.prefabInstance = Instantiate(PlayerBrain.PB.IndicatorPrefab, box.transform);
+        }
+    }
+
+    //Cooldown for jumping in midair
+    IEnumerator FlyCoolDown()
+    {
+        yield return new WaitForSeconds(0.4f);
+        batJump = true;
+    }
+
+    public override void CallFromAnimation(int value)
+    {
+        if (PlayerBrain.PB.currentController == this)
+        {
+            if (value == 0)
+            {
+                PickUpBoxBat(box);
+            }
+            else
+            {
+                PickUpBoxBat(null);
+            }
+        }
+    }
+
+    public override void ToggleBody(bool value)
+    {
+        Embodiment.canDisembody = value;
+    }
+
+    private void OnDrawGizmos()
+    {
+        //Bat Box Pos
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(heldPos.position, 0.3f);
+    }
+
+    //Flap animation 
+    public void PlayFlapAnim()
+    {
+        flap = true;
+    }
+
+    public void StopFlapAnim()
+    {
+        //flap = false;
+    }
+}
+
+                            </code>
+                        </pre>
                     </div>
                 </div>
             </div>
@@ -209,9 +2851,465 @@
                 </h2>
                 <div id="humanCont" class="accordion-collapse collapse" aria-labelledby="humanController" data-bs-parent="#NewPlayerScripts">
                     <div class="accordion-body bg-black">
-                        <code class="text-primary">
-                            Code Goes Here
-                        </code>
+                        <pre>
+                            <code class="text-primary">
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+public class HumanController : Controller
+{
+    [Header("Human Settings")]
+    public Rigidbody2D heldBox;
+    [SerializeField]
+    Transform heldPos;
+    public bool boxHeld;
+    public bool heavyBoxHeld;
+    float defaultSpeed;
+    float defaultJumpHeight;
+    //[HideInInspector]
+    public Rigidbody2D box;
+    string boxTag;
+
+    /*bool greenBox;
+    public Vector2 greenOffset;
+    public Vector2 greenSize;
+    bool redBox;
+    public Vector2 redOffset;
+    public Vector2 redSize;
+    float startingGrav;*/
+
+
+    public override void Start()
+    {
+        base.Start();
+
+        defaultSpeed = speed;
+        defaultJumpHeight = jumpHeight;
+    }
+
+    public override void FixedUpdate()
+    {
+        if (boxHeld)
+        {
+            heldBox.transform.position = heldPos.transform.position;
+        }
+
+        if (PlayerBrain.PB.canMove)
+        {
+            //Ground Movement
+            if (Mathf.Abs(PlayerBrain.PB.rb.velocity.x) < speed)
+            {
+                PlayerBrain.PB.rb.AddForce(Vector2.right * PlyCtrl.Player.Movement.ReadValue<float>() * 20 * PlayerBrain.PB.rb.mass);
+            }
+        }
+
+        //Remove momentum while on ground
+        if (PlyCtrl.Player.Movement.ReadValue<float>() == 0 && isGrounded())
+        {
+            //Reduce the player's speed by half
+            PlayerBrain.PB.rb.velocity *= new Vector2(0.75f, 1);
+            //Change any held boxes velocity to match the player
+            if (heldBox != null)
+            {
+                heldBox.velocity = PlayerBrain.PB.rb.velocity;
+            }
+        }
+
+        /*int layer = LayerMask.GetMask("Jumpables");
+
+        greenBox = Physics2D.OverlapBox(new Vector2(transform.position.x + (greenOffset.x * transform.localScale.x), transform.position.y + (greenOffset.y)),
+            greenSize, 0f, layer);
+        redBox = Physics2D.OverlapBox(new Vector2(transform.position.x + (redOffset.x * transform.localScale.x), transform.position.y + (redOffset.y)),
+            redSize, 0f, layer);
+
+        if(greenBox && !redBox && !isGrounded() && !boxHeld && PlayerBrain.PB.canMove)
+        {
+            //activate ledge grab
+        }*/
+
+        #region Animation Block
+        if (PlyCtrl.Player.Movement.ReadValue<float>() != 0 && PlayerBrain.PB.canMove)
+        {
+            PlayerBrain.PB.plyAnim.SetBool("Walking", true);
+        }
+        else
+        {
+            PlayerBrain.PB.plyAnim.SetBool("Walking", false);
+        }
+
+        if (isGrounded())
+        {
+            PlayerBrain.PB.plyAnim.SetBool("isJumping", false);
+        }
+        else
+        {
+            PlayerBrain.PB.plyAnim.SetBool("isJumping", true);
+        }
+
+        //Pushing and Pulling boxes as Human
+        if (!heavyBoxHeld)
+        {
+            if (PlayerBrain.PB.canMove)
+            {
+                //Set facing direction
+                if (PlyCtrl.Player.Movement.ReadValue<float>() > 0)
+                {
+                    this.gameObject.transform.localScale = new Vector3(-1 * Mathf.Abs(transform.localScale.x), Mathf.Abs(transform.localScale.y),
+                        Mathf.Abs(transform.localScale.z));
+                    right = true;
+                    left = false;
+                }
+                else if (PlyCtrl.Player.Movement.ReadValue<float>() < 0)
+                {
+                    this.gameObject.transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x), Mathf.Abs(transform.localScale.y),
+                        Mathf.Abs(transform.localScale.z));
+                    left = true;
+                    right = false;
+                }
+                else
+                {
+                    left = false;
+                    right = false;
+                }
+            }
+        }
+        else
+        {
+            //Set to Pushing or Pulling
+            if (this.transform.localScale.x > 0)//When player is facing left, while holding a heavy box
+            {
+                if (PlyCtrl.Player.Movement.ReadValue<float>() > 0)//When player is pressing right
+                {
+                    PlayerBrain.PB.plyAnim.SetInteger("Facing", -1);
+                }
+                else if (PlyCtrl.Player.Movement.ReadValue<float>() < 0)//When player is pressing left
+                {
+                    PlayerBrain.PB.plyAnim.SetInteger("Facing", 1);
+                }
+                else
+                {
+                    PlayerBrain.PB.plyAnim.SetInteger("Facing", 0);
+                }
+            }
+            else if (this.transform.localScale.x < 0)//When player is facing right, while holding a heavy box
+            {
+                if (PlyCtrl.Player.Movement.ReadValue<float>() > 0)//When player is pressing right
+                {
+                    PlayerBrain.PB.plyAnim.SetInteger("Facing", 1);
+                }
+                else if (PlyCtrl.Player.Movement.ReadValue<float>() < 0)//When player is pressing left
+                {
+                    PlayerBrain.PB.plyAnim.SetInteger("Facing", -1);
+                }
+                else
+                {
+                    PlayerBrain.PB.plyAnim.SetInteger("Facing", 0);
+                }
+            }
+        }
+        #endregion
+    }
+
+    public override void OnTriggerEnter2D(Collider2D other)
+    {
+        base.OnTriggerEnter2D(other);
+
+        if (PlayerBrain.PB.currentController == this)
+        {
+            if (other.CompareTag("Water"))
+            {
+                PlayerBrain.PB.plyAnim.SetTrigger("Death");
+            }
+        }
+    }
+
+    public override void Special()
+    {
+        //Check if there is a box to hold or a box being held
+        if (box != null && !boxHeld)
+        {
+            if (boxTag == "LBox" || boxTag == "MBox")
+            {
+                //f (!CheckSpaceForBox(box))
+                //{
+                    if (!Left && !Right)
+                    {
+                        PlayerBrain.PB.plyAnim.SetBool("isGrabbing", true);
+                    }
+                    else
+                    {
+                        PickUpBoxHuman(box);
+                    }
+                //}
+                /*else
+                {
+                    Debug.LogError("Not Enough space for box");
+                }*/
+            }
+            else if (boxTag == "HBox")
+            {
+                if (audioManager != null)
+                {
+                    audioManager.Play("boxGrab");
+                }
+                PlayerBrain.PB.plyAnim.SetBool("isPushing", true);
+
+                //Attach Box
+                heavyBoxHeld = true;
+                heldBox = box;
+                PlayerBrain.PB.canJump = false;
+                PlayerBrain.PB.fixedJ.enabled = true;
+                PlayerBrain.PB.fixedJ.connectedBody = heldBox;
+                PlayerBrain.PB.fixedJ.connectedBody.mass = 6;
+                speed = 3;
+                ToggleBody(false);
+            }
+        }
+        else if (boxHeld || heavyBoxHeld)
+        {
+            if (!Left && !Right)
+            {
+                PlayerBrain.PB.plyAnim.SetBool("isGrabbing", false);
+                PickUpBoxHuman(null);
+            }
+            else
+            {
+                PickUpBoxHuman(null);
+            }
+
+            if (heavyBoxHeld)
+            {
+                PickUpBoxHuman(null);
+            }
+
+            PlayerBrain.Interact -= ThrowBox;
+        }
+    }
+
+    public override void Jump()
+    {
+        if (PlayerBrain.PB.canJump)
+        {
+            if (isGrounded() || PlayerBrain.PB.inWater)
+            {
+                PlayerBrain.PB.rb.AddForce((Vector2.up * jumpHeight) /*- new Vector2(0, rb.velocity.y)*/, ForceMode2D.Impulse);
+            }
+
+            base.Jump();
+        }
+    }
+
+    public void ThrowBox()
+    {
+        if(heldBox != null && boxHeld && boxTag != "HBox")
+        {
+            PlayerBrain.PB.plyAnim.SetBool("isGrabbing", false);
+            heldBox.gravityScale = 1;
+            jumpHeight = defaultJumpHeight;
+            PlayerBrain.PB.fixedJ.enabled = false;
+            PlayerBrain.PB.fixedJ.connectedBody = null;
+            if (tempString == "LBox")
+            {
+                heldBox.gravityScale = tempValue;
+            }
+            PlayerBrain.PB.canJump = true;
+
+            float facing = -1 * transform.localScale.x;
+
+            Vector2 direction = new Vector2(facing + PlayerBrain.PB.rb.velocity.x, 
+                0.45f + Mathf.Abs(PlayerBrain.PB.rb.velocity.y));
+            Debug.Log("Direction: " + direction.normalized);
+            heldBox.AddForce(direction.normalized * 300 * heldBox.mass);
+
+            boxHeld = false;
+            heldBox = null;
+            tempString = "";
+        }
+        PlayerBrain.Interact -= ThrowBox;
+        ToggleBody(true);
+    }
+
+    public override void SetToDefault()
+    {
+        PlayerBrain.PB.plyAnim.SetBool("isGrabbing", false);
+        boxHeld = false;
+        heavyBoxHeld = false;
+        boxTag = null;
+        PlayerBrain.PB.fixedJ.enabled = false;
+        if (boxTag == "HBox")
+            PlayerBrain.PB.fixedJ.connectedBody.mass = 20;
+        speed = defaultSpeed;
+        jumpHeight = defaultJumpHeight;
+        PlayerBrain.PB.fixedJ.connectedBody = null;
+        heldBox.gravityScale = 1;
+        heldBox = null;
+        box = null;
+        PlayerBrain.Interact -= ThrowBox;
+        ToggleBody(true);
+    }
+
+    //Sets the value of the held box
+    public void SetHeldBox(Rigidbody2D rb, string inputTag)
+    {
+        if(rb != null && inputTag != "")
+        {
+            box = rb;
+            boxTag = inputTag;
+        }
+        else
+        {
+            StartCoroutine(DelaySetting());
+        }
+
+        if (PlayerBrain.PB.prefabInstance == null)
+        {
+            PlayerBrain.PB.prefabInstance = Instantiate(PlayerBrain.PB.IndicatorPrefab, box.transform);
+        }
+        else if (rb == null)
+        {
+            Destroy(PlayerBrain.PB.prefabInstance);
+        }
+        else if (PlayerBrain.PB.prefabInstance != null)
+        {
+            Destroy(PlayerBrain.PB.prefabInstance);
+            PlayerBrain.PB.prefabInstance = Instantiate(PlayerBrain.PB.IndicatorPrefab, box.transform);
+        }
+    }
+
+    //Used to hold the mass of a light box
+    float tempValue = 1;
+    string tempString = "";
+    public void PickUpBoxHuman(Rigidbody2D box)
+    {
+        if (box != null)
+        {
+            if (audioManager != null)
+            {
+                audioManager.Play("boxGrab");
+            }
+            tempString = boxTag;
+            PlayerBrain.PB.plyAnim.SetBool("isGrabbing", true);
+            //Attach box
+            heldBox = box;
+            boxHeld = true;
+            PlayerBrain.PB.fixedJ.enabled = true;
+            PlayerBrain.PB.fixedJ.connectedBody = heldBox;
+            heldBox.transform.position = heldPos.transform.position;
+
+            if(tempString == "LBox")
+            {
+                tempValue = heldBox.gravityScale;
+                heldBox.gravityScale = 0;
+            }
+            else if(tempString == "MBox")
+            {
+                PlayerBrain.PB.canJump = false;
+            }
+
+            PlayerBrain.Interact += ThrowBox;
+
+            ToggleBody(false);
+        }
+        else
+        {
+            if (audioManager != null)
+            {
+                audioManager.Play("boxGrab");
+            }
+            PlayerBrain.PB.plyAnim.SetBool("isPushing", false);
+            PlayerBrain.PB.plyAnim.SetBool("isGrabbing", false);
+            boxHeld = false;
+            heavyBoxHeld = false;
+            PlayerBrain.PB.fixedJ.enabled = false;
+            if (tempString == "HBox")
+            {
+                PlayerBrain.PB.fixedJ.connectedBody.mass = 20;
+            }
+            else if (tempString == "LBox")
+            {
+                heldBox.gravityScale = tempValue;
+            }
+            PlayerBrain.PB.canJump = true;
+            speed = defaultSpeed;
+            PlayerBrain.PB.fixedJ.connectedBody = null;
+            heldBox = null;
+            tempString = "";
+
+            PlayerBrain.Interact -= ThrowBox;
+
+            ToggleBody(true);
+        }
+    }
+
+    //Checks to see if there is enough space for the box, so that it does not get put through a wall
+    bool CheckSpaceForBox(Rigidbody2D rb)
+    {
+        BoxCollider2D[] cols = new BoxCollider2D[2];
+        rb.GetAttachedColliders(cols); //Gets all the colliders attached to a box
+        BoxCollider2D col;
+
+        //Determines which collider is the box collider, versus the trigger collider
+        if (cols[0].isTrigger)
+        {
+            col = cols[1];
+        }
+        else
+        {
+            col = cols[0];
+        }
+
+        float dist = 0;
+        int layer = LayerMask.NameToLayer("CheckSpace");
+        //Casts a box (much like raycast) into the scene
+        RaycastHit2D hit = Physics2D.BoxCast(heldPos.position, col.size, 0f, Vector2.down, dist, layer);
+
+        return hit.collider != null; //If collider exists, sends true. Otherwise false
+    }
+
+    public override void CallFromAnimation(int value)
+    {
+        if(PlayerBrain.PB.currentController == this)
+        {
+            if (value == 0)
+            {
+                PickUpBoxHuman(box);
+            }
+            else
+            {
+                PickUpBoxHuman(null);
+            }
+        }
+    }
+
+    public override void ToggleBody(bool value)
+    {
+        Embodiment.canDisembody = value;
+    }
+
+    IEnumerator DelaySetting()
+    {
+        yield return new WaitForSeconds(0.5f);
+        box = null;
+        boxTag = "";
+    }
+
+    private void OnDrawGizmos()
+    {
+        //Human Box Pos
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(heldPos.position, 0.3f);
+
+        /*Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(new Vector2(transform.position.x + (redOffset.x * transform.localScale.x), transform.position.y + (redOffset.y)), redSize);
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireCube(new Vector2(transform.position.x + (greenOffset.x * transform.localScale.x), transform.position.y + (greenOffset.y)), greenSize);*/
+    }
+}
+
+                            </code>
+                        </pre>
                     </div>
                 </div>
             </div>
@@ -223,9 +3321,210 @@
                 </h2>
                 <div id="catCont" class="accordion-collapse collapse" aria-labelledby="catController" data-bs-parent="#NewPlayerScripts">
                     <div class="accordion-body bg-black">
-                        <code class="text-primary">
-                            Code Goes Here
-                        </code>
+                        <pre>
+                            <code class="text-primary">
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+public class CatController : Controller
+{
+    public static Action Scratch = delegate { };
+    public static Action JumpAction = delegate { };
+    [Header("Cat Settings")]
+    public bool OnWall;
+    public bool treadmill = false;
+
+    Vector2 catDir;
+    float defGravScale;
+
+    public override void Start()
+    {
+        base.Start();
+
+        defGravScale = PlayerBrain.PB.rb.gravityScale;
+    }
+
+    public override void FixedUpdate()
+    {
+        base.FixedUpdate();
+
+        if(OnWall)
+        {
+            Embodiment.canDisembody = false;
+        }
+        else
+        {
+            Embodiment.canDisembody = true;
+        }
+
+
+        if(OnWall)
+        {
+            PlayerBrain.PB.rb.AddForce(catDir * 10, ForceMode2D.Impulse);//Applies force in towards the climbing wall
+        }
+
+        if (PlayerBrain.PB.canMove && !treadmill)
+        {
+            //Regular grounded movement
+            if (PlyCtrl.Player.Movement.ReadValue<float>() != 0 && !OnWall)
+            {
+                //Movement
+                if (Mathf.Abs(PlayerBrain.PB.rb.velocity.x) < speed)
+                {
+                    PlayerBrain.PB.rb.AddForce(Vector2.right * PlyCtrl.Player.Movement.ReadValue<float>() * 20 * PlayerBrain.PB.rb.mass);
+                }
+
+                //Audio
+                if (audioManager != null)
+                {
+                    audioManager.Stop("catClimb");
+                }
+            }
+            //If Cat is on wall
+            else if (OnWall)
+            {
+                //Checks if the player is pushing up or down
+                if (PlyCtrl.Player.FishInWater.ReadValue<Vector2>().y != 0)
+                {
+                    PlayerBrain.PB.rb.velocity += (Vector2.up * PlyCtrl.Player.FishInWater.ReadValue<Vector2>().y * speed * 0.75f) - new Vector2(0, PlayerBrain.PB.rb.velocity.y);
+                    if (audioManager != null)
+                    {
+                        //audioManager.Play("catClimb");
+                    }
+                }
+                else if (audioManager != null)
+                {
+                    audioManager.Stop("catClimb");
+                }
+            }
+            
+            if (!OnWall)
+            {
+                if (audioManager != null)
+                {
+                    audioManager.Stop("catClimb");
+                }
+            }
+
+            //Remove momentum while on wall
+            if (PlyCtrl.Player.FishInWater.ReadValue<Vector2>().y == 0 && OnWall)
+            {
+                PlayerBrain.PB.rb.velocity *= new Vector2(1, 0.5f);
+            }
+
+            #region Animation Block
+            //Climbing on Wall as cat
+            if (OnWall)
+            {
+
+                if (PlyCtrl.Player.FishInWater.ReadValue<Vector2>().y > 0)
+                {
+                    PlayerBrain.PB.plyAnim.SetInteger("WallState", 1);
+                }
+                else if(PlyCtrl.Player.FishInWater.ReadValue<Vector2>().y < 0)
+                {
+                    PlayerBrain.PB.plyAnim.SetInteger("WallState", -1);
+                }
+                else
+                {
+                    PlayerBrain.PB.plyAnim.SetInteger("WallState", 0);
+                }
+            }
+            else
+            {
+                PlayerBrain.PB.plyAnim.SetBool("Climb", false);
+                PlayerBrain.PB.plyAnim.SetInteger("WallState", 0);
+            }
+
+            //Set direction as cat on wall
+            if (OnWall && catDir == Vector2.right)
+            {
+                this.gameObject.transform.localScale = new Vector3(-1 * Mathf.Abs(transform.localScale.x), Mathf.Abs(transform.localScale.y),
+                    Mathf.Abs(transform.localScale.z));
+                right = true;
+                left = false;
+            }
+            else if (OnWall && catDir == Vector2.left)
+            {
+                this.gameObject.transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x), Mathf.Abs(transform.localScale.y),
+                    Mathf.Abs(transform.localScale.z));
+                left = true;
+                right = false;
+            }
+            #endregion
+        }
+    }
+
+    public override void SetToDefault()
+    {
+        catDir = Vector2.zero;
+        OnWall = false;
+        PlayerBrain.PB.plyAnim.SetTrigger(form);
+    }
+
+    public void SetCatOnWall(bool value, Vector2 direction)
+    {
+        OnWall = value;
+        catDir = direction;
+        PlayerBrain.PB.plyAnim.SetBool("Climb", value);
+        if (value)
+        {
+            PlayerBrain.PB.rb.gravityScale = 0;
+        }
+        else
+        {
+            PlayerBrain.PB.rb.gravityScale = defGravScale;
+        }
+    }
+
+    public override void Jump()
+    {
+        if (PlayerBrain.PB.canJump)
+        {
+            if (isGrounded() && !OnWall)
+            {
+                PlayerBrain.PB.rb.AddForce((Vector2.up * jumpHeight) /*- new Vector2(0, rb.velocity.y)*/, ForceMode2D.Impulse);
+            }
+            //Side jump when climbing
+            else if (OnWall)
+            {
+                PlayerBrain.PB.rb.AddForce(new Vector2(-catDir.x, 1) * jumpHeight * 0.5f, ForceMode2D.Impulse);
+                catDir = -catDir;
+            }
+
+            base.Jump();
+            JumpAction();
+        }
+    }
+
+    public override void Special()
+    {
+        //Spawn hitbox
+        Scratch();
+    }
+    public override void OnTriggerEnter2D(Collider2D other)
+    {
+        base.OnTriggerEnter2D(other);
+        if (PlayerBrain.PB.currentController == this)
+        {
+            if (other.CompareTag("Water"))
+            {
+                PlayerBrain.PB.plyAnim.SetTrigger("Death");
+            }
+        }
+    }
+
+    public override void ToggleBody(bool value)
+    {
+        Embodiment.canDisembody = value;
+    }
+}
+
+                            </code>
+                        </pre>
                     </div>
                 </div>
             </div>
@@ -237,9 +3536,274 @@
                 </h2>
                 <div id="fishCont" class="accordion-collapse collapse" aria-labelledby="fishController" data-bs-parent="#NewPlayerScripts">
                     <div class="accordion-body bg-black">
-                        <code class="text-primary">
-                            Code Goes Here
-                        </code>
+                        <pre>
+                            <code class="text-primary">
+                                using System.Collections;
+                                using System.Collections.Generic;
+                                using UnityEngine;
+                                
+                                public class FishController : Controller
+                                {
+                                    //Variables
+                                    [Header("Fish Settings")]
+                                    public Switch lever;
+                                    public float waterDensity;
+                                    public float angle;
+                                
+                                    Quaternion maintainedAngle;
+                                    int frames = 3;
+                                    int elapsedFrames = 0;
+                                    bool isFishFlipping = false;
+                                    float prevDir = 0;
+                                    float temp;
+                                
+                                    public override void FixedUpdate()
+                                    {
+                                        if(PlayerBrain.PB.inWater)
+                                            prevDir = transform.localScale.x;
+                                        base.FixedUpdate();
+                                        if (PlayerBrain.PB.inWater)
+                                        {
+                                            if (prevDir != transform.localScale.x && !isFishFlipping)
+                                            {
+                                                transform.rotation = Quaternion.Euler(0, 0, transform.rotation.eulerAngles.z * -1);
+                                
+                                                /*isFishFlipping = true;
+                                                temp = prevDir;*/
+                                            }
+                                
+                                            /*if(isFishFlipping)
+                                            {
+                                                float ratio = (float)elapsedFrames / frames;
+                                                transform.localScale = Vector3.Lerp(new Vector3(temp, transform.localScale.y, transform.localScale.z), 
+                                                    new Vector3(temp * -1, transform.localScale.y, transform.localScale.z), 
+                                                    ratio);
+                                                elapsedFrames = (elapsedFrames + 1) % (frames + 1);
+                                                if (ratio == 1)
+                                                {
+                                                    elapsedFrames = 0;
+                                                    isFishFlipping = false;
+                                                }
+                                            }*/
+                                        }
+                                
+                                        //Movement when in water
+                                        //Handles movemnt when on the land
+                                        if (PlayerBrain.PB.canMove)
+                                        {
+                                            if (PlayerBrain.PB.inWater)
+                                            //if (PlyCtrl.Player.Movement.ReadValue<float>() != 0 && PlayerBrain.PB.inWater)
+                                            {
+                                                //Move when the player is pressing buttons
+                                                if (PlyCtrl.Player.FishInWater.ReadValue<Vector2>() != Vector2.zero)
+                                                {
+                                                    float x = 0, y = 0;
+                                                    //Checks if either the y or x velocity is exceeding the speed
+                                                    if (Mathf.Abs(PlayerBrain.PB.rb.velocity.x) < speed)
+                                                    {
+                                                        x = 1;
+                                                    }
+                                                    if (Mathf.Abs(PlayerBrain.PB.rb.velocity.y) < speed)
+                                                    {
+                                                        y = 1;
+                                                    }
+                                
+                                                    PlayerBrain.PB.rb.AddForce(new Vector2(x, y) * PlyCtrl.Player.FishInWater.ReadValue<Vector2>() * 20 * PlayerBrain.PB.rb.mass);
+                                                }
+                                            }
+                                            //Movement when on the ground
+                                            else if (isGrounded())
+                                            {
+                                                //Move when the player is pressing buttons
+                                                if (PlyCtrl.Player.Movement.ReadValue<float>() != 0)
+                                                {
+                                                    if (Mathf.Abs(PlayerBrain.PB.rb.velocity.x) < speed * 0.3f)
+                                                    {
+                                                        PlayerBrain.PB.rb.AddForce(Vector2.right * PlyCtrl.Player.Movement.ReadValue<float>() * 20 * PlayerBrain.PB.rb.mass);
+                                                    }
+                                                }
+                                            }
+                                            else
+                                            {
+                                                //Move when the player is pressing the direction
+                                                if (PlyCtrl.Player.Movement.ReadValue<float>() != 0)
+                                                {
+                                                    PlayerBrain.PB.rb.velocity += (Vector2.right * PlyCtrl.Player.Movement.ReadValue<float>() * speed * 0.5f) - new Vector2(PlayerBrain.PB.rb.velocity.x, 0);
+                                                }
+                                            }
+                                        }
+                                
+                                        #region Animation Block
+                                        //Moving in Water as fish
+                                        //Check if the blob is attached
+                                        if (PlayerBrain.PB.inWater)
+                                        {
+                                            if (PlyCtrl.Player.FishInWater.ReadValue<Vector2>() != Vector2.zero)
+                                            {
+                                                PlayerBrain.PB.plyAnim.SetBool("Walking", true);
+                                            }
+                                            else
+                                            {
+                                                PlayerBrain.PB.plyAnim.SetBool("Walking", false);
+                                            }
+                                
+                                            //Fish Rotation Block
+                                            Vector2 playerInput = new Vector2(Mathf.Round(PlyCtrl.Player.FishInWater.ReadValue<Vector2>().x), 
+                                                Mathf.Round(PlyCtrl.Player.FishInWater.ReadValue<Vector2>().y));
+                                
+                                            if (playerInput == Vector2.left || playerInput == Vector2.right)// Player is pressing left or right
+                                            {
+                                                maintainedAngle = Quaternion.Euler(0, 0, 0);
+                                            }
+                                            else if(playerInput == Vector2.up)// Player is pressing up
+                                            {
+                                                maintainedAngle = Quaternion.Euler(0, 0, -90 * Mathf.Round(transform.localScale.x));
+                                            }
+                                            else if (playerInput == Vector2.down)// Player is pressing down
+                                            {
+                                                maintainedAngle = Quaternion.Euler(0, 0, 90 * Mathf.Round(transform.localScale.x));
+                                            }
+                                            else if(playerInput == new Vector2(1, 1))// Player is press right and up
+                                            {
+                                                maintainedAngle = Quaternion.Euler(0, 0, 45);
+                                            }
+                                            else if (playerInput == new Vector2(1, -1))// Player is pressing right and down
+                                            {
+                                                maintainedAngle = Quaternion.Euler(0, 0, -45);
+                                            }
+                                            else if (playerInput == new Vector2(-1, 1))// Player is pressing left and up
+                                            {
+                                                maintainedAngle = Quaternion.Euler(0, 0, -45);
+                                            }
+                                            else if (playerInput == new Vector2(-1, -1))// Player is pressing left and down
+                                            {
+                                                maintainedAngle = Quaternion.Euler(0, 0, 45);
+                                            }
+                                
+                                            if (transform.rotation != maintainedAngle)
+                                            {
+                                                //float ratio = (float)elapsedFrames / frames;
+                                                transform.rotation = Quaternion.RotateTowards(transform.rotation, maintainedAngle, 5);
+                                                //elapsedFrames = (elapsedFrames + 1) % (frames + 1);
+                                            }
+                                
+                                        }
+                                        else
+                                        {
+                                            maintainedAngle = Quaternion.Euler(0, 0, 0);
+                                            if (transform.rotation != maintainedAngle)
+                                            {
+                                                //float ratio = (float)elapsedFrames / frames;
+                                                transform.rotation = Quaternion.RotateTowards(transform.rotation, maintainedAngle, 5);
+                                                //elapsedFrames = (elapsedFrames + 1) % (frames + 1);
+                                            }
+                                        }
+                                        #endregion
+                                    }
+                                
+                                    //Set to default
+                                    public override void SetToDefault()
+                                    {
+                                        PlayerBrain.PB.inWater = false;
+                                        Quaternion rotation = Quaternion.Euler(0, 0, 0);
+                                        this.transform.rotation = rotation;
+                                    }
+                                
+                                    //Jump
+                                    public override void Jump()
+                                    {
+                                        if (PlayerBrain.PB.canJump)
+                                        {
+                                            if (isGrounded() || PlayerBrain.PB.inWater)
+                                            {
+                                                PlayerBrain.PB.rb.AddForce((Vector2.up * jumpHeight) /*- new Vector2(0, rb.velocity.y)*/, ForceMode2D.Impulse);
+                                            }
+                                
+                                            base.Jump();// this goes last in function
+                                        }
+                                    }
+                                
+                                    //Special
+                                    public override void Special()
+                                    {
+                                        if (PlayerBrain.PB.inWater)
+                                            PlayerBrain.PB.plyAnim.SetTrigger("Spin");
+                                
+                                        if (lever != null)
+                                        {
+                                            //Activate the lever
+                                            lever.Interact();
+                                        }
+                                    }
+                                
+                                    public override void OnTriggerEnter2D(Collider2D other)
+                                    {
+                                        base.OnTriggerEnter2D(other);
+                                        if (PlayerBrain.PB.currentController == this)
+                                        {
+                                            //If the collision is water, swim
+                                            if (other.CompareTag("Water"))
+                                            {
+                                                if (audioManager != null)
+                                                {
+                                                    audioManager.Play("splash");
+                                                }
+                                                PlayerBrain.PB.inWater = true;
+                                                PlayerBrain.PB.plyCol.density = waterDensity;
+                                                PlayerBrain.PB.canJump = false;
+                                            }
+                                        }
+                                    }
+                                
+                                    public override void OnTriggerStay2D(Collider2D other)
+                                    {
+                                        if (PlayerBrain.PB.currentController == this)
+                                        {
+                                            if (other.CompareTag("Water"))
+                                            {
+                                                PlayerBrain.PB.inWater = true;
+                                                PlayerBrain.PB.plyAnim.SetBool("inWater", true);
+                                            }
+                                        }
+                                    }
+                                
+                                    public override void OnTriggerExit2D(Collider2D other)
+                                    {
+                                        if (PlayerBrain.PB.currentController == this)
+                                        {
+                                            //If the collision is water, stop swimming
+                                            if (other.CompareTag("Water"))
+                                            {
+                                                PlayerBrain.PB.inWater = false;
+                                                PlayerBrain.PB.canJump = true;
+                                                PlayerBrain.PB.plyCol.density = density;
+                                                PlayerBrain.PB.plyAnim.SetBool("inWater", false);
+                                            }
+                                        }
+                                    }
+                                
+                                    IEnumerator SpinFish(Quaternion angle)
+                                    {
+                                        while(transform.rotation != angle)
+                                        {
+                                            transform.rotation = Quaternion.RotateTowards(transform.rotation, angle, 8 * Time.deltaTime);
+                                            yield return null;
+                                        }
+                                    }
+                                
+                                    //Sets lever value
+                                    public void SetLever(Switch l)
+                                    {
+                                        lever = l;
+                                    }
+                                
+                                    public override void ToggleBody(bool value)
+                                    {
+                                        Embodiment.canDisembody = value;
+                                    }
+                                }                                
+                            </code>
+                        </pre>
                     </div>
                 </div>
             </div>
@@ -251,9 +3815,91 @@
                 </h2>
                 <div id="playBrain" class="accordion-collapse collapse" aria-labelledby="playerBrain" data-bs-parent="#NewPlayerScripts">
                     <div class="accordion-body bg-black">
-                        <code class="text-primary">
-                            Code Goes Here
-                        </code>
+                        <pre>
+                            <code class="text-primary">
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Tilemaps;
+using UnityEngine.InputSystem;
+
+/// <summary>
+/// This holds all the variables that are used the most that by the player
+/// </summary>
+public class PlayerBrain : MonoBehaviour
+{
+    //Allows for an easy way of accessing the different forms
+    public enum skeleType
+    {
+        Blob,
+        Cat,
+        Fish,
+        Bat,
+        Human
+    }
+
+    /// <summary>
+    /// Reference this to have access to this scripts field without needing an object reference in every script
+    /// </summary>
+    public static PlayerBrain PB;
+    public static Action Interact = delegate { };
+    public static Action Embody = delegate { };
+    public static Action Pause = delegate { };
+    public static Action Death = delegate { };
+
+    public CapsuleCollider2D plyCol;
+    public Animator plyAnim;
+    public Rigidbody2D rb;
+    public SpriteRenderer plySpr;
+    public FixedJoint2D fixedJ;
+    public SpringJoint2D spring;
+    public Embodiment Embodiment;
+    public GameObject IndicatorPrefab;
+    public GameObject prefabInstance;
+    public bool canMove = true;
+    public bool canJump = true;
+    public bool inWater = false;
+
+    /// <summary>
+    /// Represents the current active controller, in other words, the current form 
+    /// </summary>
+    [Space]
+    public Controller currentController;
+
+    /// <summary>
+    /// Dictionary for all skeleton controllers
+    /// </summary>
+    public static Dictionary<skeleType, Controller> Skeletons;
+
+    private void Awake()
+    {
+        //Makes sure there is only one instance of Player brain
+        if (PB != null)
+            Destroy(PB);
+        else
+            PB = this;
+
+        //Builds the Dictionary to be used by scripts
+        //Should happen before all scripts to make sure it gets made
+        Skeletons = new Dictionary<skeleType, Controller>();
+        Skeletons.Add(skeleType.Blob, GetComponent<BlobController>());
+        Skeletons.Add(skeleType.Cat, GetComponent<CatController>());
+        Skeletons.Add(skeleType.Bat, GetComponent<BatController>());
+        Skeletons.Add(skeleType.Fish, GetComponent<FishController>());
+        Skeletons.Add(skeleType.Human, GetComponent<HumanController>());
+    }
+
+    //Kill from menu
+    public void MenuKill()
+    {
+        Debug.Log("Menu Kill called");
+        plyAnim.SetTrigger("Death");
+    }
+}
+
+                            </code>
+                        </pre>
                     </div>
                 </div>
             </div>
@@ -265,9 +3911,244 @@
                 </h2>
                 <div id="embody" class="accordion-collapse collapse" aria-labelledby="embodiment" data-bs-parent="#NewPlayerScripts">
                     <div class="accordion-body bg-black">
-                        <code class="text-primary">
-                            Code Goes Here
-                        </code>
+                        <pre>
+                            <code class="text-primary">
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// Is the new Control Movement
+/// Note: Whenever we want to prevent the player from emboding or disemboding somewhere, set canEmbody or canDisembody to false
+///     but make sure you also set it back to true. Otherwise, the player will never be able to leave it's form
+/// </summary>
+public class Embodiment : MonoBehaviour
+{
+    public Transform currentSkeleton;
+    public SkeletonTrigger targetSkeleton;
+    public GameObject cloudPrefab;
+    public PlayerBrain PB;
+    public static bool canEmbody = true;
+    public static bool canDisembody = false;
+
+    private void OnEnable()
+    {
+        PlayerBrain.Embody += Embody;
+        canEmbody = true;
+    }
+
+    private void OnDisable()
+    {
+        PlayerBrain.Embody -= Embody;
+        PlayerBrain.Embody -= Disembody;
+    }
+
+    //Changes the player's form
+    void Embody()
+    {
+        Debug.Log("Embody");    
+        if(targetSkeleton != null && CheckSpace(targetSkeleton) && canEmbody && !PB.plyAnim.GetBool("isJumping"))
+        {
+            Instantiate(cloudPrefab, transform.position, Quaternion.identity);
+            if (AudioManager.instance != null)
+            {
+                AudioManager.instance.Play("embody");
+            }
+
+            //Enables the controller of the targeted form which changes the current controller
+            PlayerBrain.PB.currentController.enabled = false;
+            PlayerBrain.Skeletons[targetSkeleton.type].enabled = true;
+            targetSkeleton.isGrabbed = true;
+            //Debug.Log("Player set to " + targetSkeleton.type);
+
+            //Attach skeleton to player and disable it
+            currentSkeleton = targetSkeleton.transform.parent;
+            currentSkeleton.parent = transform;
+            currentSkeleton.transform.position = transform.position;
+            currentSkeleton.gameObject.SetActive(false);
+
+            PlayerBrain.Embody -= Embody;
+            canEmbody = false;
+            PlayerBrain.Embody += Disembody;
+            canDisembody = true;
+        }
+    }
+
+    //Reverts the Player back to the blob form
+    void Disembody()
+    {
+        Debug.Log("Disembody");
+        if (currentSkeleton != null && canDisembody && !PB.plyAnim.GetBool("isJumping"))
+        {
+            Instantiate(cloudPrefab, transform.position, Quaternion.identity);
+            if (AudioManager.instance != null)
+            {
+                AudioManager.instance.Play("unEmbody");
+            }
+
+            //Disables the controller of the old form and renables Blob form
+            BlobController temp = (BlobController)PlayerBrain.Skeletons[PlayerBrain.skeleType.Blob];
+            PlayerBrain.PB.currentController.enabled = false;
+            PlayerBrain.Skeletons[PlayerBrain.skeleType.Blob].enabled = true;
+            Debug.Log("Player set to " + targetSkeleton.type);
+
+            //Renables skeleton
+            currentSkeleton.gameObject.SetActive(true);
+            currentSkeleton.parent = null;
+            currentSkeleton = null;
+
+            //Makes the Player Grab the skeleton
+            if (targetSkeleton != null)
+            {
+                temp.heldSkel = targetSkeleton;
+                temp.heldSkel.isGrabbed = true;
+                Destroy(PlayerBrain.PB.prefabInstance);
+                temp.skelHeld = true;
+                PlayerBrain.PB.fixedJ.enabled = true;
+                PlayerBrain.PB.fixedJ.connectedBody = temp.heldSkel.transform.parent.GetComponent<Rigidbody2D>();
+                temp.heldSkel.skelGObject.transform.position = temp.skelHeldPos.transform.position;
+                PlayerBrain.PB.plyAnim.SetBool("isGrabbing", true);
+                PlayerBrain.PB.plyAnim.SetTrigger("Disembody");
+                temp.jumpHeight = 60;
+            }
+            else
+            {
+                Debug.LogError("There is no skeleton to grab.");
+            }
+
+            PlayerBrain.Embody += Embody;
+            canEmbody = true;
+            PlayerBrain.Embody -= Disembody;
+            canDisembody = false;
+        }
+    }
+
+    //Used by Player to forcibly change the player to the correct form
+    public void EmbodyThis(SkeletonTrigger target)
+    {
+        //if target is empty, transform into the blob
+        if(target == null)
+        {
+            //Disables the controller of the old form and renables Blob form
+            BlobController temp = (BlobController)PlayerBrain.Skeletons[PlayerBrain.skeleType.Blob];
+            PlayerBrain.PB.currentController.enabled = false;
+            PlayerBrain.Skeletons[PlayerBrain.skeleType.Blob].enabled = true;
+                
+            currentSkeleton.gameObject.SetActive(true);
+            targetSkeleton.skeloScript.RespawnSkeleton();
+            targetSkeleton = null;
+            currentSkeleton.parent = null;
+            currentSkeleton = null;
+
+            PlayerBrain.Embody += Embody;
+            canEmbody = true;
+            PlayerBrain.Embody -= Disembody;
+            canDisembody = false;
+        }
+        else
+        {
+            //Enables the controller of the targeted form which changes the current controller
+            PlayerBrain.PB.currentController.enabled = false;
+            PlayerBrain.Skeletons[target.type].enabled = true;
+            target.isGrabbed = true;
+            Debug.Log("Player set to " + target.type);
+
+            if (currentSkeleton != null)
+            {
+                currentSkeleton.gameObject.SetActive(true);
+                targetSkeleton.skeloScript.RespawnSkeleton();
+                currentSkeleton.parent = null;
+                currentSkeleton = null;
+            }
+
+            //Attach skeleton to player and disable it
+            currentSkeleton = target.transform.parent;
+            currentSkeleton.parent = transform;
+            currentSkeleton.transform.position = transform.position;
+            currentSkeleton.gameObject.SetActive(false);
+            targetSkeleton = target;
+
+            PlayerBrain.Embody -= Embody;
+            canEmbody = false;
+            PlayerBrain.Embody += Disembody;
+            canDisembody = true;
+        }
+    }
+
+    public void SetTargetSkeleton(SkeletonTrigger target)
+    {
+        targetSkeleton = target;
+    }
+
+    //Checks if theres is enough space for the next form
+    bool CheckSpace(SkeletonTrigger target)
+    {
+        //Controller of the skeleton the player is transforming into
+        Controller targetSkeleton = PlayerBrain.Skeletons[target.type];
+        //Calculate the center of the collider after transforming
+        Vector2 targetCenter = new Vector2(PlayerBrain.PB.plyCol.bounds.center.x, PlayerBrain.PB.plyCol.bounds.min.y + targetSkeleton.colliderSize.y);
+
+        //Defines the colliders that will be detected by the cast to see if there is space
+        int layer = LayerMask.NameToLayer("CheckSpace");
+
+        //Send a Capsule cast to see if there is enough space for the player
+        RaycastHit2D hit = Physics2D.CapsuleCast(targetCenter, targetSkeleton.colliderSize, targetSkeleton.direction,
+            0f, Vector2.down, 0f, layer);
+        //Debug.Log(hit.collider);
+        return hit.collider == null;
+    }
+
+    /// <summary>
+    /// To be used by the shrieker to remove the skeleton from the blob
+    /// </summary>
+    public void ShriekerEvent()
+    {
+        //EmbodyThis(null);
+        Debug.Log("The type is: " + PlayerBrain.PB.currentController.GetType());
+        //Checks if the current form is the blob, then reacts accordingly
+        if (PlayerBrain.PB.currentController.GetType() == typeof(BlobController))
+        {
+            BlobController control = (BlobController)PlayerBrain.PB.currentController;
+
+            //Detaches the skeleton from the player if it is carrying a skeleton
+            if(control.skelHeld)
+            {
+                control.heldSkel.isGrabbed = false;
+                control.heldSkel = null;
+                control.skelHeld = false;
+                PlayerBrain.PB.fixedJ.enabled = false;
+                PlayerBrain.PB.fixedJ.connectedBody = null;
+                PlayerBrain.PB.plyAnim.SetBool("isGrabbing", false);
+                control.jumpHeight = 18.1f;
+            }
+        }
+        else
+        {
+            EmbodyThis(null);
+        }
+    }
+
+    //Check if it enters a no-disembody area
+    public void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Embody"))
+        {
+            canDisembody = false;
+        }
+    }
+
+    //Check if it exits a no-disembody area
+    public void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Embody"))
+        {
+            canDisembody = true;
+        }
+    }
+}
+                            </code>
+                        </pre>
                     </div>
                 </div>
             </div>
@@ -316,7 +4197,7 @@
             </ul>
             <br><br>
             
-            For the programming side of the project, I worked on some of the small mechanics used throughout the puzzles, such as buttons, lever switches, a treadmill, etc.
+            <!-- For the programming side of the project, I worked on some of the small mechanics used throughout the puzzles, such as buttons, lever switches, a treadmill, etc. -->
         </p>
         
         <hr>
