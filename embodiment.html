@@ -89,7 +89,7 @@
                         </p>
                         <div class="text-start">
                             <!-- File Download -->
-                            <a href="pictures\Embodiment\Files\TentacleDrawer.cs" target="_blank" class="btn btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="right" title="View File">
+                            <a href="pictures\Embodiment\Files\TentacleDrawer.cs" target="_blank" class="btn btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="right" title="View File" download="">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-file-earmark" viewBox="0 0 16 16">
                                     <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
                                   </svg>
@@ -4159,42 +4159,112 @@ public class Embodiment : MonoBehaviour
 
         <h3>Player Abilites</h3>
         <p>
-            Besides the major script rework, I also worked on the specific abilities of each of the forms, like:
-            <ul id="blobForms">
-                <li>The Blob
-                    <figure>
-                        <figcaption>Swing from objects using its tentacles, pick up skeleton piles, and embody skeletons</figcaption>
-                        <img src="pictures\Embodiment\BlobSwinging.gif" >
-                        <img src="pictures\Embodiment\HumanEmbody.gif">
-                    </figure>
-                </li>
-                <li>The Human
-                    <figure>
-                        <figcaption>Pick up, push, and throw boxes</figcaption>
-                        <img src="pictures\Embodiment\Human Picking Up Boxes.gif">
-                        <img src="pictures\Embodiment\Human Pushing Boxes.gif">
-                    </figure>
-                </li>   
-                <li>The Bat
-                    <figure>
-                        <figcaption>Fly and also pick up boxes</figcaption>
-                        <img src="pictures\Embodiment\BatEmbody.gif">
-                    </figure>
-                </li>
-                <li>The Fish
-                    <figure>
-                        <figcaption>Swims and can do a tail spin to flip switches</figcaption>
-                        <img src="pictures\Embodiment\Swimming.gif">
-                        <img src="pictures\Embodiment\Spinning.gif">
-                    </figure>
-                </li>
-                <li>The Cat
-                    <figure>
-                        <figcaption>Climb walls and is the fastest on land</figcaption>
-                        <img src="pictures\Embodiment\Cat Climbing.gif">
-                    </figure>
-                </li>
-            </ul>
+            Besides the major script rework, I also worked on the specific abilities of each of the forms. Everything uses Unity's built-in physics system.
+            <div class="container-fluid">
+                <div class="row border-3 border-primary border-start mb-2"><h4>The Blob</h4>
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5>Swinging</h5>
+                            <p>
+                                The blob's swinging ability was one of the first I tried to tackle. I figured I'd use one of Unity's 2D physics joints to help with this. Where I would use it to connect to the point that I want the blob to swimg from. So, I first figured out how to tell the player it's close enough to a swingable object. Then when it got close enough it would send over its point in space. I would then turn on the joint and set it to the this point in space. While also activating the animation. When developing the movement when attached to the swingable object, I decided between having force being able relative to the rotation of the player and force being applied in static direction. Relative ended being more natural fun in end. I also made it where when you pressed the jump button, you would jump off the tentacle. This allowed the player to be able to gain height and keep its speed. One of challenges I ran into was rotating the player when swinging around the object, I had to learn more about Quaternions and how you can apply them to objects to change their rotation.
+                                <br><br>
+                                To create the animation for the tentacle, I used the lerp function to move the end point of the tentacle towards the object. Originally, it was just turning a game object off and on again. But I wanted to try to animate it in some way. I figured it wouldn't work if tried to do it with Unity's built-in animator, so I looked on google to see how to animate in a script. Which lead me to video that taught me what I needed to know. Using a lerp functions "t" variable, if you tie the addition of one to the frame rate using coroutines. You can animate in code.
+                        </div>
+                        <div class="col-6">
+                            <img src="pictures\Embodiment\BlobSwinging.gif" class="img-fluid">
+                        </div>
+                    </div>
+
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5>Embody</h5>
+                            <p>
+                                The embodiment ability works by using a custom variable type that denotes what form to transform to. Then when the player presses the button, it would change values, update functions, and play animations to transition to the next form. When creating this I pictured a gameboy with game cartridges, where the cartridges were the different forms and slotting them in was how you changed forms. How it works is that it takes the type from the bone pile, then searches for it in a list of all the controllers attached to the player, and turns off the blob controller and turns on the new forms controller. When transforming back into the blob, it then finds the blob form and goes through the same process.
+                                <br><br>
+                                The blob can also pick up bone piles. Which is done by also using Unity's 2d joints. When the player is close enough to a pile, the pile is then stored in a variable to be used for attaching to the 2d joint and to help change some variables. The joints allow for the player to move itself and the skeleton when moving around. You can also embody a skeleton while holding a skeleton.
+                        </div>
+                        <div class="col-6">
+                            <img src="pictures\Embodiment\HumanEmbody.gif" class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+                <div class="row border-3 border-primary border-start mb-2"><h4>The Human</h4>
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5>Picking up Boxes</h5>
+                            <p>
+                                Like the blob, the human can pick up and move boxes. Except, unlike the blob it can't pick up skeletons only boxes. The Human can pick up and move light and medium boxes. The medium boxes also prevent the player from jumping. This is to help portray the different weights of the different boxes. When I was trying to create this ability I had to figure out a way to attach the box to the player so it could be moved with it. So I choose to use Unity's 2d joints, since already had the behavior I needed. When the player gets close to a box, the Rigidbody2D gets stored to be used for later. When the button is pushed they will be attached to the player using the joint, this adds weight to the player and also makes it possible to move them as one. The box is also parented to the player. Though, when the box and player are attached some values have to be change to allow player to move. A major issue I had to make it so that the box was on the correct side of the player when they moved left or right. The solution was to use the player's scale the flip it over to the other side. I tried setting the position manually, but it ran into a lot problems.
+                            </p>
+                        </div>
+                        <div class="col-6">
+                            <img src="pictures\Embodiment\Human Picking Up Boxes.gif" class="img-fluid">
+                        </div>
+                    </div>
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5>Pushing Boxes</h5>
+                            <p>
+                                When the player encounters a heavy box, instead of picking it up like the light and medium boxes, it is attached like explained earlier but it will not be lifted up and can only be moved left and right. You are also locked to one side of the box. This is to help denote the weight of the box.
+                            </p>
+                        </div>
+                        <div class="col-6">
+                            <img src="pictures\Embodiment\Human Pushing Boxes.gif" class="img-fluid">
+                        </div>
+                    </div>
+                </div>   
+                <div class="row border-3 border-primary border-start mb-2"><h4>The Bat</h4>
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5>Flying and Picking up Boxes</h5>
+                            <p>
+                                The bat can also pick up and move boxes, except it can only pick up light. I felt this would be a good way to distinquish the bat abilities from the other two forms that can pick up and move things. Especially, since it is the only form that move boxes any where. To allow the bat to fly, the cap of how many jumps you can make was lost to replicate flying. There is also a timer that prevents the player from spamming the jump button, as way to keep the flying sensation somewhat realistic.
+                            </p>
+                        </div>
+                        <div class="col-6">
+                            <img src="pictures\Embodiment\BatFlight.gif" class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+                <div class="row border-3 border-primary border-start mb-2"><h4>The Fish</h4>
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5>Swimming as the Fish</h5>
+                            <p>
+                                Making the fish's movement was fairly simply, just added the y portion of the controller input to the movement. The hard part was the animation of the player rotating. It was difficult to figure how to translate the input of the controller, which is a vector, into a rotation. The method I used was an if statement tree that accounted for every possible input, and hard-codeing a rotation to be rotated. There is a simpler way where can take a vector and convert it to a rotation, but because we flip the sprite using the scale property. It wouldn't have looked right.
+                            </p>
+                        </div>
+                        <div class="col-6">
+                            <img src="pictures\Embodiment\Swimming.gif" class="img-fluid">
+                        </div>
+                    </div>
+
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5>Spinning</h5>
+                            <p>
+                               The player presses a button they will make the fish a spin which is used to interact with lever and buttons. When the player gets close to an interatable it will check the distance between itself and player, if they player is close enough and presses the button on the controller then it would turn the interactable to its "on" state. This was very simple to make. It was added to give the fish the ability interact with things underwater.
+                            </p>
+                        </div>
+                        <div class="col-6">
+                            <img src="pictures\Embodiment\Spinning.gif" class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+                <div class="row border-3 border-primary border-start mb-2"><h4>The Cat</h4>
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5>Climbing</h5>
+                            <p>
+                                To create the cat's climbing ability, I had to figure out to stop it from falling due to gravity and allow the player to move the cat up and down. The movement was easy just check for vertical inputs for moving up and down, I also implemented the ability to jump off the walls in order to gain height. Cause otherwise the only way to get off the was to press a direction away from the wall.
+                                <br><br>
+                                It was much more difficult trying to figure out how to attach the cat to the wall. I tested out two ways, one where a force was applied to the cat going towards the wall and the other way was by turning the effects of gravity off on the cat. The first way it very awkward to try to get off the wall so I went with the other method in the end. The cat also can only climb on a specific type of wall. Each of the forms changes the tag of the player to the specific form, the walls have a script which looks for this tag where it will then send over the direction the player is supposed to face and then turn off gravity. Where it is now in its climbing state.
+                        </div>
+                        <div class="col-6">
+                            <img src="pictures\Embodiment\Cat Climbing.gif" class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+            </div>
             <br><br>
             
             <!-- For the programming side of the project, I worked on some of the small mechanics used throughout the puzzles, such as buttons, lever switches, a treadmill, etc. -->
