@@ -61,35 +61,45 @@
 
     <h2 class="bg-primary text-center py-3">Contributions</h2>
     <div class="container-xl">
-        <figure class="figRight">
-            <img src="pictures\3O'ClockHorror\Lights.gif">
-        </figure>
-        <p>
-            <h3>The Lighting System</h3>
-            This would've been my first real attempt at making video game in a group. I was tasked with creating the lighting system that was our candles and other light sources were going to be. This would've been my first time trying out lighting.
-            <br><br>
-            When all the lights are off, it is completely dark, apart from the player and a few other exceptions. The lighting works by using a sprite mask that reveals the area of anything within its radius.
-            <br>
-            I was really proud of myself for making this. In retrospect, it's not too complicated but at the time it was a huge momemt for me. Because I was struggling with trying to get the effect I wanted, which was hiding and revealing the area. So, finding out that just simply using an image as essentaily a window, is really cool.
-        </p>
-
-        <hr>
-        <h3>The Watcher</h3>
-        <p>
-            The Watcher is an AI I built for one of the two enemies within our game. It's supposed to sit in the dark, while following you around the manor. If you get too close to him, it will attack you while jumpscaring you.
-            <br>
-            It follows you by keeping track of what floor you are on and than attempts to find you by trying to teleporting to your room, though it selects a random room from the ones surrounding the player and the one it's located in. That way it can give you some time alone away from him. That way you can take of the puzzles without much hindering you.
-        </p>
-        <hr>
-        <h3>The Picture Puzzle</h3>
-        <figure class="figRight" style="width: 40%">
-            <img src="pictures\3O'ClockHorror\PicturePuzzle.png" alt="">
-        </figure>
-        <p>
-            The picture puzzle was a puzzle I created, where you must locate pictures located in house that you must use in order to solve the puzzle. The pictures had various dates which give you clue as to how it's solved. Said dates are randomly assigned by another script at runtime.
-            <br>
-            I developed the dragging and dropping of the pictures, the win state of the puzzle that would allow you to progress to the next floor. And I also developed the script that randomly assign the dates to the pictures. I found the whole process really fun cause it challenged me to figure out a way on how to give players the ability to drag and drop. I didn't know at the time that UI elements could tell you that the pointer was hovering over them. Which gave me a jumping off point.
-        </p>
+        <div class="row">
+            <div class="col-8">
+                <h3>The Lighting System</h3>
+                <p>
+                    I was tasked with creating the lighting system that was our candles and other light sources were going to be. This would've been my first time trying out lighting.
+                    <br><br>
+                    When all the lights are off, it is completely dark, apart from the player and a few other exceptions. The lighting works by using a sprite mask that reveals the area of anything within its radius.
+                    <br>
+                    I was really proud of myself for making this. In retrospect, it's not too complicated but at the time it was a huge momemt for me. Because I was struggling with trying to get the effect I wanted, which was hiding and revealing the area. So, finding out that just simply using an image as essentaily a window, is really cool.
+                </p>
+        
+                <hr>
+                <h3>The Watcher</h3>
+                <p>
+                    The Watcher is an AI I built for one of the two enemies within our game. It's supposed to sit in the dark, while following you around the manor. If you get too close to him, it will attack you while jumpscaring you.
+                    <br>
+                    It follows you by keeping track of what floor you are on and than attempts to find you by trying to teleporting to your room, though it selects a random room from the ones surrounding the player and the one it's located in. That way it can give you some time alone away from him. That way you can take of the puzzles without much hindering you.
+                </p>
+                <hr>
+            </div>
+            <div class="col-4">
+                <img class="img-fluid" src="pictures\3O'ClockHorror\Lights.gif">
+            </div>
+        </div>
+        
+        <div class="row py-3">
+            <div class="col-8">
+                <h3>The Picture Puzzle</h3>
+                <p>
+                    The picture puzzle was a puzzle I created, where you must locate pictures located in house that you must use in order to solve the puzzle. The pictures had various dates which give you clue as to how it's solved. Said dates are randomly assigned by another script at runtime.
+                    <br>
+                    I developed the dragging and dropping of the pictures, the win state of the puzzle that would allow you to progress to the next floor. And I also developed the script that randomly assign the dates to the pictures. I found the whole process really fun cause it challenged me to figure out a way on how to give players the ability to drag and drop. I didn't know at the time that UI elements could tell you that the pointer was hovering over them. Which gave me a jumping off point.
+                </p>
+            </div>
+            <div class="col-4">
+                <img class="img-fluid" src="pictures\3O'ClockHorror\PicturePuzzle.png" alt="">
+            </div>
+        </div>
+        
     </div>
     <my-footer></my-footer>
 
