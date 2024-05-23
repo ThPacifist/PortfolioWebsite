@@ -1,0 +1,71 @@
+// --- Custom variables ---
+// colors
+$primary: rgb(13, 180, 111);
+$seconday: rgb(129, 175, 148);
+$dark: black;
+$box-shadow: .5rem .5rem .85rem black;
+// font
+$font-family-base: "Franklin Gothic Medium";
+
+
+
+// nav stuff
+$nav-link-font-size: 1.75rem;
+
+$navbar-nav-link-padding-x: 3rem;
+$navbar-dark-color: $primary;
+
+// import the functions and variables
+@import "../node_modules/bootstrap/scss/_functions.scss";
+@import "../node_modules/bootstrap/scss/_variables.scss";
+
+// Using Established variables
+$nav-link-font-weight: $font-weight-bold;
+$h1-font-size:                $font-size-base * 2.85;
+$h2-font-size:                $font-size-base * 2.15;
+$h3-font-size:                $font-size-base * 1.85;
+$h4-font-size:                $font-size-base * 1.25;
+$h5-font-size:                $font-size-base * 1.5;
+$h6-font-size:                $font-size-base;
+
+//Custom maps
+$custom-theme-colors: (
+    "tertiary": rgb(56, 95, 80),
+    "base": rgb(41, 56, 52),
+);
+
+$custom-grid-breakpoints: (
+    5xl: 1920px
+);
+
+$custom-cont-max-widths: (
+    5xl: 1522px
+);
+
+$theme-colors: map-merge($custom-theme-colors, $theme-colors);
+$grid-breakpoints: map-merge($grid-breakpoints, $custom-grid-breakpoints);
+$container-max-widths: map-merge($container-max-widths, $custom-cont-max-widths);
+
+@import "../node_modules/bootstrap/scss/maps";
+@import "../node_modules/bootstrap/scss/utilities";
+//Modifing Utilities
+$utilities: map-merge(
+  $utilities,
+  (
+    "rounded": map-merge(
+      map-get($utilities, "rounded"),
+      (
+        values: map-merge(
+          map-get(map-get($utilities, "rounded"), "values"),
+          (
+            21: 1rem,
+            31: 1.75rem
+            ),
+        ),
+      ),
+    ),
+  )
+);
+
+// import bootstrap
+@import "../node_modules/bootstrap/scss/bootstrap.scss";

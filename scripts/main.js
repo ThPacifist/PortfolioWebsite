@@ -3,24 +3,44 @@ class MyHeader extends HTMLElement
     connectedCallback() 
     {
         this.innerHTML = `
-            <header>
-                <nav id="mobile_menu"></nav>
-                <nav id="nav_menu">
-                    <ul>
-                        <li><a href="index.html">Home</a></li>
-                        <li><a href="">Projects</a>
-                            <ul>
-                                <li><a href="3oclockhorror.html">3 O'Clock Horror</a></li>
-                                <li><a href="embodiment.html">Embodiment</a></li>
-                                <!-- <li><a href="">Unnamed Samurai Game</a></li>
-                                <li><a href="">Stalker and Brute</a></li> -->
-                            </ul>
-                        </li>
-                        <li><a href="documents/Game Developer Resume.pdf" target="_blank">Resume</a></li>
-                        <li><a href="aboutme.html">About Me</a></li>
+        <header>
+        <nav class="navbar navbar-expand-lg navbar-dark p-0">
+            <div class="container-fluid">
+              <!-- a class="navbar-brand" href="#">Navbar</a> -->
+
+              <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+              </button> <!-- This is the burger image that appears when the screen gets smaller-->
+
+              <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav">
+
+                  <li class="nav-item border-end border-3 border-dark ">
+                    <a class="nav-link" href="index.html">Home</a>
+                  </li>
+
+                  <li class="nav-item dropdown border-end border-3 border-dark">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      Projects
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDropdownMenuLink">
+                      <li><a class="dropdown-item fs-4" href="embodiment.html">Embodiment</a></li>
+                      <li><a class="dropdown-item fs-4" href="3oclockhorror.html">3 O'Clock Horror</a></li> <!--Link: 3oclockhorror.html -->
                     </ul>
-                </nav>
-            </header>
+                  </li>
+
+                  <li class="nav-item border-end border-3 border-dark">
+                    <a class="nav-link" href="documents/Game Developer Resume.pdf" target="_blank">Resume</a>
+                  </li>
+
+                  <li class="nav-item border-end border-3 border-dark">
+                    <a class="nav-link" href="aboutme.html">About Me</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </nav>
+    </header>
         `
     }
 }
@@ -30,14 +50,21 @@ class MyFooter extends HTMLElement
     connectedCallback() 
     {
         this.innerHTML = `
-            <footer>
-                <section id="links">
-                    <a href="mailto:benjamin.henschen@gmail.com"><img src="pictures/gmail.png"/></a>&nbsp;&nbsp;&nbsp;&nbsp;
-                    <a href="https://www.linkedin.com/in/benjamin-henschen/"><img src="pictures/linkedin.png"/></a>&nbsp;&nbsp;&nbsp;&nbsp;
-                    <a href="https://github.com/ThPacifist"><img src="pictures/github.png"/></a>&nbsp;&nbsp;&nbsp;&nbsp;
-                    <a href="https://www.youtube.com/channel/UCiC15eythbplhk4lK41BqMg?view_as=subscriber"><img src="pictures/youtube.png"/></a>
-                </section>
-            </footer>
+              <footer>
+              <div class="container-xl">
+                <div class="row">
+                  <div class="col-6 border-end border-3 border-black pt-2 pb-1">
+                    <a href="mailto:benjamin.henschen@gmail.com" class="mx-3"><img src="pictures/gmail.png" style="height: 32px"/></a>
+                    <a href="https://www.linkedin.com/in/benjamin-henschen/" class="mx-3"><img src="pictures/linkedin.png" style="height: 32px"/></a>
+                    <a href="https://github.com/ThPacifist" class="mx-3"><img src="pictures/github.png" style="height: 32px"/></a>
+                    <a href="https://www.youtube.com/channel/UCiC15eythbplhk4lK41BqMg?view_as=subscriber" class="mx-3"><img src="pictures/youtube.png" style="height: 32px" /></a>
+                  </div>
+                  <div class="col-6 pt-2">
+                    <p class="fs-5"> Created by Benjamin Henschen</p>
+                  </div>
+                </div>
+              </div>
+          </footer>
         `
     }
 }
