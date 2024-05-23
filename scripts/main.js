@@ -25,7 +25,7 @@ class MyHeader extends HTMLElement
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDropdownMenuLink">
                       <li><a class="dropdown-item fs-4" href="embodiment.html">Embodiment</a></li>
-                      <li><a class="dropdown-item fs-4" href="">3 O'Clock Horror</a></li> <!--Link: 3oclockhorror.html -->
+                      <li><a class="dropdown-item fs-4" href="3oclockhorror.html">3 O'Clock Horror</a></li> <!--Link: 3oclockhorror.html -->
                     </ul>
                   </li>
 
